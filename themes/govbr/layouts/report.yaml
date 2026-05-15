@@ -1,0 +1,57 @@
+package: govbr
+canvas:
+  width: 1280
+  height: 720
+  gutter: 0
+shared:
+  components:
+    nav_menu:
+      span: 2
+      component: menu
+      rowspan: 5
+      orientation: vertical
+      items:
+        - page: Visão Geral
+          description: ""
+        - page: Detalhes
+          description: ""
+pages:
+  - id: visao_geral_page_id
+    display_name: Visão Geral
+    rows:
+      - id: row0
+        height: 144
+        cols:
+          - ref: nav_menu
+          - span: 10
+            visual: textbox
+      - id: row1
+        height: 288
+        cols:
+          - span: 6
+            visual: barChart
+          - span: 6
+            visual: columnChart
+      - id: row2
+        height: 288
+        cols:
+          - span: 4
+            visual: donutChart
+          - span: 4
+            visual: donutChart
+          - span: 4
+            visual: donutChart
+  - id: detalhes_page_id
+    display_name: Detalhes
+    rows:
+      - id: row0
+        height: 144
+        cols:
+          - ref: nav_menu
+          - span: 10
+            visual: textbox
+      - id: row1
+        height: 576
+        cols:
+          - span: 12
+            visual: tableEx

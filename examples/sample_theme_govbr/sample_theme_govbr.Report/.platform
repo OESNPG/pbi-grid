@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "sample_theme_govbr"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "1eb45700-2f0f-4e80-9f8d-af41e4fd0d7a"
+  }
+}

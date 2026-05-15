@@ -1,0 +1,32 @@
+package: govbr
+canvas:
+  width: 1280
+  height: 720
+  gutter: 0
+pages:
+  - id: main_page_id
+    display_name: Dashboard
+    rows:
+      - id: header
+        height: 48
+        cols:
+          - span: 12
+            visual: textbox
+      - id: kpi_row
+        height: 120
+        cols:
+          - span: 3
+            visual: cardVisual
+          - span: 3
+            visual: cardVisual
+          - span: 3
+            visual: cardVisual
+          - span: 3
+            visual: cardVisual
+      - id: charts
+        height: 552
+        cols:
+          - span: 6
+            visual: barChart
+          - span: 6
+            visual: columnChart

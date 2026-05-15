@@ -1,0 +1,40 @@
+# GOVBR Design System — https://www.gov.br/ds/home
+# Paleta: blue-warm-vivid — refs: --active=#0c326f, --interactive=#1351b4, --gray-2=#f8f8f8
+header:
+  background_color: "#FFFFFF"          # branco — fundo padrão govbr
+  title_color: "#071D41"               # blue-warm-vivid-90 — título sobre fundo branco
+  title_font_size: 14                  # pt — título principal
+  subtitle_color: "#1351B4"            # blue-warm-vivid-70 — subtítulo/org
+  subtitle_font_size: 10               # pt
+  accent_color: "#1351B4"              # azul primário — borda inferior de identidade
+  accent_height: 2                     # px — espessura da borda inferior
+
+footer:
+  logo_path: "govbr.png"               # relative to themes/govbr/ — copied to RegisteredResources
+  logo_width: 165                      # px — matches govbr CSS width
+  logo_height: 60                      # px — matches govbr CSS height
+  background_color: "#071D41"          # blue-warm-vivid-90 — dark navy GovBR footer
+  title_color: "#FFFFFF"               # white — category headers
+  title_font_size: 10
+  link_color: "#C9D4E3"               # light blue-gray — links on dark background
+  link_font_size: 9
+  item_height: 24                      # px per item row
+  legal_color: "#A8B5C3"              # muted — legal text
+  legal_font_size: 9
+  legal_height: 44                     # px — height of the legal bar
+  divider_color: "#FFFFFF"            # primary blue — top accent stripe
+  divider_height: 4                    # px — top accent thickness
+
+menu:
+  background_color: "#FFFFFF"          # white card behind all menu items
+  item_height: 48                      # px per item — menu sizes to content, not to rowspan
+  header:
+    font_color: "#071D41"              # blue-warm-vivid-90 — dark, no fill (transparent header)
+  item:
+    font_color_default: "#1351B4"      # --interactive (blue-warm-vivid-70)
+    font_color_hover: "#1351B4"        # same — GOVBR DS keeps text color on hover
+    font_color_selected: "#FFFFFF"     # white on dark background
+    fill_color_default: "#F8F8F8"      # --gray-2 — submenu background for child items
+    fill_color_hover: "#1351B4"        # --interactive at 84% transparent (16% opacity)
+    fill_color_selected: "#0C326F"     # --active (blue-warm-vivid-80) — darker selected state
+    outline_color: "#1351B4"

@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+build/
+
+# Output
+output/
+output.zip
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/

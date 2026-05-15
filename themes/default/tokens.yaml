@@ -1,0 +1,35 @@
+header:
+  background_color: "#595959"          # gray — neutral header
+  title_color: "#FFFFFF"
+  title_font_size: 14
+  subtitle_color: "#DDDDDD"
+  subtitle_font_size: 10
+  accent_color: null                   # no accent bar for default theme
+  accent_height: 0
+
+footer:
+  background_color: "#2D2D2D"
+  title_color: "#FFFFFF"
+  title_font_size: 10
+  link_color: "#CCCCCC"
+  link_font_size: 9
+  item_height: 24
+  legal_color: "#999999"
+  legal_font_size: 9
+  legal_height: 44
+  divider_color: null
+  divider_height: 0
+
+menu:
+  background_color: "#FFFFFF"          # white card behind all menu items
+  item_height: 40                      # px per item — menu sizes to content, not to rowspan
+  header:
+    font_color: "#3d3d3d"
+    background_color: "#F0F0F0"        # light gray background for group headers
+  item:
+    font_color_default: "#595959"
+    font_color_hover: "#262626"
+    font_color_selected: "#FFFFFF"     # white — readable over solid dark background
+    fill_color_hover: "#595959"        # gray tint on hover (75% transparent)
+    fill_color_selected: "#262626"     # solid dark gray background when selected
+    outline_color: "#8c8c8c"

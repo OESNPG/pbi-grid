@@ -1,0 +1,278 @@
+package: govbr
+
+report:
+  name: sample_theme_govbr
+  source: ./sample_theme_govbr.Report
+
+canvas:
+  width: 1280
+  height: 720
+  gutter: 0
+
+shared:
+  components:
+    page_header:
+      span: 12
+      component: header
+      title: "Sample GovBR Theme"
+      subtitle: "Digital Government Standard"
+
+    page_footer:
+      span: 12
+      component: footer
+      logo_path: "govbr.png"    # relative to theme dir — overrides tokens footer.logo_path
+      logo_height: 30           # px — overrides tokens footer.logo_height
+      legal: "Text intended to display information related to the terms of use and license."
+      links:
+        - title: "CATEGORY"
+          items:
+            - label: "Single line text"
+              url: "https://www.gov.br"
+            - label: "Text with line break"
+              url: "https://www.gov.br"
+            - label: "Single line text"
+              url: "https://www.gov.br"
+            - label: "Text with line break"
+              url: "https://www.gov.br"
+        - title: "CATEGORY"
+          items:
+            - label: "Single line text"
+              url: "https://www.gov.br"
+            - label: "Text with line break"
+              url: "https://www.gov.br"
+            - label: "Single line text"
+              url: "https://www.gov.br"
+            - label: "Text with line break"
+              url: "https://www.gov.br"
+        - title: "CATEGORY"
+          items:
+            - label: "Single line text"
+              url: "https://www.gov.br"
+            - label: "Text with line break"
+              url: "https://www.gov.br"
+            - label: "Single line text"
+              url: "https://www.gov.br"
+            - label: "Text with line break"
+              url: "https://www.gov.br"
+
+    # nav_menu has no default rowspan — each page sets rowspan locally
+    # so the footer row can be placed outside the menu's column span
+    nav_menu:
+      span: 2
+      component: menu
+      orientation: vertical
+      items:
+        - page: Home
+          description: "Home section"
+        - page: Menu Group 01
+          description: "Menu group section"
+          items:
+          - page: Menu Item 01
+            description: "First section"
+          - page: Menu Item 02
+            description: "Second section"
+        - page: Menu Group 02
+          description: "Menu group section"
+          items:
+          - page: Menu Item 03
+            description: "Third section"
+          - page: Menu Item 04
+            description: "Fourth section"
+          - page: Menu Item 05
+            description: "Fifth section"
+
+pages:
+  - id: 3985c179880bcb995b7b
+    display_name: Home
+    rows:
+      - id: header
+        height: 64
+        cols:
+          - ref: page_header
+      - id: content
+        height: 120
+        cols:
+          - ref: nav_menu
+            rowspan: 3         # covers content + charts + table
+          - span: 3
+            visual: cardVisual
+          - span: 3
+            visual: cardVisual
+          - span: 4
+            visual: cardVisual
+      - id: charts
+        height: 180
+        cols:
+          - span: 5
+            visual: barChart
+          - span: 5
+            visual: barChart
+      - id: table
+        height: 180
+        cols:
+          - span: 10
+            visual: tableEx
+      - id: footer
+        height: 232
+        cols:
+          - ref: page_footer   # full width — outside nav_menu rowspan
+
+  - id: ce5171dd05725fe3c635
+    display_name: Menu Item 01
+    rows:
+      - id: header
+        height: 64
+        cols:
+          - ref: page_header
+      - id: content
+        height: 120
+        cols:
+          - ref: nav_menu
+            rowspan: 3
+          - span: 3
+            visual: cardVisual
+          - span: 3
+            visual: cardVisual
+          - span: 4
+            visual: cardVisual
+      - id: charts
+        height: 180
+        cols:
+          - span: 5
+            visual: barChart
+          - span: 5
+            visual: barChart
+      - id: table
+        height: 180
+        cols:
+          - span: 10
+            visual: tableEx
+      - id: footer
+        height: 176
+        cols:
+          - ref: page_footer
+
+  - id: e96f9b64f98975ecafec
+    display_name: Menu Item 02
+    rows:
+      - id: header
+        height: 64
+        cols:
+          - ref: page_header
+      - id: content
+        height: 120
+        cols:
+          - ref: nav_menu
+            rowspan: 3
+          - span: 3
+            visual: cardVisual
+          - span: 3
+            visual: cardVisual
+          - span: 4
+            visual: cardVisual
+      - id: charts
+        height: 180
+        cols:
+          - span: 5
+            visual: barChart
+          - span: 5
+            visual: barChart
+      - id: table
+        height: 180
+        cols:
+          - span: 10
+            visual: tableEx
+      - id: footer
+        height: 176
+        cols:
+          - ref: page_footer
+
+  - id: f75772adfbecc1c720ae
+    display_name: Menu Item 03
+    rows:
+      - id: header
+        height: 64
+        cols:
+          - ref: page_header
+      - id: content
+        height: 120
+        cols:
+          - ref: nav_menu
+            rowspan: 2         # covers content + charts only
+          - span: 3
+            visual: cardVisual
+          - span: 3
+            visual: cardVisual
+          - span: 4
+            visual: cardVisual
+      - id: charts
+        height: 356
+        cols:
+          - span: 5
+            visual: barChart
+          - span: 5
+            visual: barChart
+      - id: footer
+        height: 232
+        cols:
+          - ref: page_footer
+
+  - id: 89b5620bbf7060dbc3ee
+    display_name: Menu Item 04
+    rows:
+      - id: header
+        height: 64
+        cols:
+          - ref: page_header
+      - id: content
+        height: 120
+        cols:
+          - ref: nav_menu
+            rowspan: 2
+          - span: 3
+            visual: cardVisual
+          - span: 3
+            visual: cardVisual
+          - span: 4
+            visual: cardVisual
+      - id: charts
+        height: 356
+        cols:
+          - span: 5
+            visual: barChart
+          - span: 5
+            visual: barChart
+      - id: footer
+        height: 232
+        cols:
+          - ref: page_footer
+
+  - id: e37adb3987402db22578
+    display_name: Menu Item 05
+    rows:
+      - id: header
+        height: 64
+        cols:
+          - ref: page_header
+      - id: content
+        height: 120
+        cols:
+          - ref: nav_menu
+            rowspan: 2
+          - span: 3
+            visual: cardVisual
+          - span: 3
+            visual: cardVisual
+          - span: 4
+            visual: cardVisual
+      - id: charts
+        height: 356
+        cols:
+          - span: 5
+            visual: barChart
+          - span: 5
+            visual: barChart
+      - id: footer
+        height: 232
+        cols:
+          - ref: page_footer
