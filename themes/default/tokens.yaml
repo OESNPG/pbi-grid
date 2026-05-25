@@ -1,11 +1,15 @@
 header:
-  background_color: "#595959"          # gray — neutral header
+  background_color: "#595959"
   title_color: "#FFFFFF"
   title_font_size: 14
   subtitle_color: "#DDDDDD"
   subtitle_font_size: 10
-  accent_color: null                   # no accent bar for default theme
+  accent_color: null
   accent_height: 0
+  logo_path: imgs/powerbi_header.png
+  logo_width: 120
+  logo_height: 40
+  logo_alt_text: "Power BI"
 
 footer:
   background_color: "#2D2D2D"
@@ -19,17 +23,115 @@ footer:
   legal_height: 44
   divider_color: null
   divider_height: 0
+  logo_path: imgs/powerbi_footer.png
+  logo_width: 100
+  logo_height: 32
+  logo_alt_text: "Power BI"
 
 menu:
-  background_color: "#FFFFFF"          # white card behind all menu items
-  item_height: 40                      # px per item — menu sizes to content, not to rowspan
+  background_color: "#FFFFFF"
+  item_height: 40
+  icon_size: 24
+  divider_color: "#E0E0E0"
+  divider_weight: 1
   header:
     font_color: "#3d3d3d"
-    background_color: "#F0F0F0"        # light gray background for group headers
+    background_color: "#F0F0F0"
   item:
     font_color_default: "#595959"
     font_color_hover: "#262626"
-    font_color_selected: "#FFFFFF"     # white — readable over solid dark background
-    fill_color_hover: "#595959"        # gray tint on hover (75% transparent)
-    fill_color_selected: "#262626"     # solid dark gray background when selected
+    font_color_selected: "#FFFFFF"
+    fill_color_default: "#F5F5F5"
+    fill_color_hover: "#595959"
+    fill_color_selected: "#262626"
     outline_color: "#8c8c8c"
+
+layout:
+  border_color: "#E0E0E0"
+  border_weight: 1
+  border_radius: 0
+
+palette:
+  name: "default"
+
+  dataColors:
+    - "#4472C4"
+    - "#ED7D31"
+    - "#A9D18E"
+    - "#FF0000"
+    - "#FFC000"
+    - "#5B9BD5"
+    - "#70AD47"
+    - "#264478"
+    - "#9E480E"
+    - "#636363"
+
+  firstLevelElements: "#252423"
+  secondLevelElements: "#605E5C"
+  thirdLevelElements: "#C8C6C4"
+  fourthLevelElements: "#8A8886"
+  background: "#FFFFFF"
+  secondaryBackground: "#F3F2F1"
+  tableAccent: "#4472C4"
+  hyperlink: "#118DFF"
+
+  good: "#107C10"
+  neutral: "#FFC000"
+  bad: "#A4262C"
+  maximum: "#252423"
+  center: "#4472C4"
+  minimum: "#DEEAF1"
+  "null": "#CCCCCC"
+
+  textClasses:
+    label:
+      fontSize: 10
+      fontFace: "Segoe UI"
+      color: "#252423"
+    title:
+      fontSize: 14
+      fontFace: "Segoe UI Bold"
+      color: "#252423"
+    callout:
+      fontSize: 45
+      fontFace: "DIN"
+      color: "#252423"
+    header:
+      fontSize: 12
+      fontFace: "Segoe UI Semibold"
+      color: "#252423"
+
+  visualStyles:
+    "*":
+      "*":
+        title:
+          - fontColor:
+              solid:
+                color: "#252423"
+            fontSize: 11
+            fontFamily: "Segoe UI"
+            bold: true
+        categoryAxis:
+          - labelColor:
+              solid:
+                color: "#605E5C"
+            gridlineColor:
+              solid:
+                color: "#C8C6C4"
+            gridlineStyle: "dotted"
+        valueAxis:
+          - labelColor:
+              solid:
+                color: "#605E5C"
+            gridlineColor:
+              solid:
+                color: "#C8C6C4"
+            gridlineStyle: "dotted"
+        legend:
+          - fontColor:
+              solid:
+                color: "#605E5C"
+        dataLabels:
+          - color:
+              solid:
+                color: "#252423"

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "27a43da6f1a616a8c322",
+  "position": {
+    "height": 420.0,
+    "tabOrder": 3000,
+    "width": 529.3333,
+    "x": 215.3333,
+    "y": 66.0,
+    "z": 3000
+  },
+  "visual": {
+    "drillFilterOtherVisuals": true,
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "active": true,
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_geolocation"
+                    }
+                  },
+                  "Property": "country"
+                }
+              },
+              "nativeQueryRef": "country",
+              "queryRef": "dim_geolocation.country"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_population"
+                        }
+                      },
+                      "Property": "population"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "nativeQueryRef": "Soma de population",
+              "queryRef": "Sum(fact_population.population)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "isDefaultSort": true,
+        "sort": [
+          {
+            "direction": "Descending",
+            "field": {
+              "Aggregation": {
+                "Expression": {
+                  "Column": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "fact_population"
+                      }
+                    },
+                    "Property": "population"
+                  }
+                },
+                "Function": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    "visualType": "barChart"
+  }
+}

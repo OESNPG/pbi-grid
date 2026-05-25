@@ -11,7 +11,7 @@ import yaml
 class Canvas:
     width: int = 1280
     height: int = 720
-    gutter: float = 0.0
+    gutter: float = 4.0
 
 
 @dataclass
@@ -33,6 +33,11 @@ class ColSpec:
     component: str | None = None
     visual: str | None = None     # Power BI visual type (used when creating new bare visuals)
     rowspan: int = 1
+    height: float | None = None   # override visual height within the row (default: full row height)
+    valign: str = "top"           # vertical alignment: top | center | bottom
+    border: bool = False          # render a border shape behind this cell
+    border_color: str | None = None
+    border_weight: float | None = None
     props: dict[str, Any] = field(default_factory=dict)
 
 
@@ -41,6 +46,9 @@ class RowSpec:
     id: str
     height: int
     cols: list[ColSpec]
+    border: bool = False
+    border_color: str | None = None
+    border_weight: float | None = None
 
 
 @dataclass
@@ -63,6 +71,71 @@ class PageSpec:
     rows: list[RowSpec]
 
 
+# ── YAML parsing helpers ───────────────────────────────────────────────────────
+
+_KNOWN_COL_KEYS = {
+    "span", "name", "component", "visual", "rowspan", "ref",
+    "height", "valign", "border", "border_color", "border_weight",
+}
+
+
+def _resolve_ref(col_raw: dict[str, Any], shared_components: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """Merge a shared component definition with local col overrides.
+
+    Returns the merged dict; raises ValueError when the ref name is unknown.
+    """
+    ref = col_raw.get("ref")
+    if not ref:
+        return col_raw
+    if ref not in shared_components:
+        raise ValueError(
+            f"ref '{ref}' not found in shared.components. "
+            f"Available: {list(shared_components)}"
+        )
+    base = dict(shared_components[ref])
+    base.update({k: v for k, v in col_raw.items() if k != "ref"})
+    return base
+
+
+def _make_colspec(col_raw: dict[str, Any], shared_components: dict[str, dict[str, Any]]) -> ColSpec:
+    """Parse one col dict (after ref resolution) into a ColSpec."""
+    col_raw = _resolve_ref(col_raw, shared_components)
+    raw_h = col_raw.get("height")
+    raw_bw = col_raw.get("border_weight")
+    return ColSpec(
+        span=col_raw.get("span", 12),
+        name=col_raw.get("name"),
+        component=col_raw.get("component"),
+        visual=col_raw.get("visual"),
+        rowspan=col_raw.get("rowspan", 1),
+        height=float(raw_h) if raw_h is not None else None,
+        valign=col_raw.get("valign", "top"),
+        border=bool(col_raw.get("border", False)),
+        border_color=col_raw.get("border_color") or None,
+        border_weight=float(raw_bw) if raw_bw is not None else None,
+        props={k: v for k, v in col_raw.items() if k not in _KNOWN_COL_KEYS},
+    )
+
+
+def _parse_rows(rows_raw: list[dict], shared_components: dict[str, dict[str, Any]]) -> list[RowSpec]:
+    """Parse a list of row dicts into RowSpec objects."""
+    rows: list[RowSpec] = []
+    for row_raw in rows_raw:
+        cols = [_make_colspec(c, shared_components) for c in row_raw.get("cols", [])]
+        raw_bw = row_raw.get("border_weight")
+        rows.append(RowSpec(
+            id=row_raw["id"],
+            height=row_raw.get("height", 0),
+            cols=cols,
+            border=bool(row_raw.get("border", False)),
+            border_color=row_raw.get("border_color") or None,
+            border_weight=float(raw_bw) if raw_bw is not None else None,
+        ))
+    return rows
+
+
+# ── LayoutSpec ─────────────────────────────────────────────────────────────────
+
 @dataclass
 class LayoutSpec:
     report_name: str
@@ -75,6 +148,11 @@ class LayoutSpec:
 
     @classmethod
     def from_yaml(cls, path: Path) -> "LayoutSpec":
+        """Parse a layout YAML file into a LayoutSpec.
+
+        Resolves all ``ref:`` references against ``shared.components`` at parse
+        time so the engine never needs to look them up again.
+        """
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
 
         canvas_raw = data.get("canvas", {})
@@ -84,62 +162,28 @@ class LayoutSpec:
             gutter=canvas_raw.get("gutter", 0.0),
         )
 
-        # Parse named shared components — resolved at parse time when `ref:` is used.
-        _known_col = {"span", "name", "component", "visual", "rowspan", "ref"}
         shared_components: dict[str, dict[str, Any]] = {
             name: comp
             for name, comp in data.get("shared", {}).get("components", {}).items()
         }
 
-        def _make_colspec(col_raw: dict[str, Any]) -> ColSpec:
-            # Resolve ref: merge shared component defaults with local overrides.
-            ref = col_raw.get("ref")
-            if ref:
-                if ref not in shared_components:
-                    raise ValueError(
-                        f"ref '{ref}' not found in shared.components. "
-                        f"Available: {list(shared_components)}"
-                    )
-                base = dict(shared_components[ref])
-                base.update({k: v for k, v in col_raw.items() if k != "ref"})
-                col_raw = base
-            return ColSpec(
-                span=col_raw.get("span", 12),
-                name=col_raw.get("name"),
-                component=col_raw.get("component"),
-                visual=col_raw.get("visual"),
-                rowspan=col_raw.get("rowspan", 1),
-                props={k: v for k, v in col_raw.items() if k not in _known_col},
-            )
-
-        def _parse_cols(rows_raw: list[dict]) -> list[RowSpec]:
-            rows: list[RowSpec] = []
-            for row_raw in rows_raw:
-                cols = [_make_colspec(c) for c in row_raw.get("cols", [])]
-                rows.append(RowSpec(
-                    id=row_raw["id"],
-                    height=row_raw.get("height", 0),
-                    cols=cols,
-                ))
-            return rows
-
-        shared_rows: list[SharedRowSpec] = []
-        for row_raw in data.get("shared", {}).get("rows", []):
-            cols = [_make_colspec(c) for c in row_raw.get("cols", [])]
-            shared_rows.append(SharedRowSpec(
+        shared_rows: list[SharedRowSpec] = [
+            SharedRowSpec(
                 id=row_raw["id"],
-                cols=cols,
+                cols=[_make_colspec(c, shared_components) for c in row_raw.get("cols", [])],
                 height=row_raw.get("height", 0),
-            ))
+            )
+            for row_raw in data.get("shared", {}).get("rows", [])
+        ]
 
-        pages: list[PageSpec] = []
-        for page_raw in data.get("pages", []):
-            rows = _parse_cols(page_raw.get("rows", []))
-            pages.append(PageSpec(
+        pages: list[PageSpec] = [
+            PageSpec(
                 id=page_raw["id"],
                 display_name=page_raw.get("display_name", page_raw["id"]),
-                rows=rows,
-            ))
+                rows=_parse_rows(page_raw.get("rows", []), shared_components),
+            )
+            for page_raw in data.get("pages", [])
+        ]
 
         report_raw = data.get("report", {})
         source_report_path: Path | None = None

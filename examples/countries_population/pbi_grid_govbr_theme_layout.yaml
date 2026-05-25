@@ -1,0 +1,176 @@
+report:
+  name: countries_population
+  source: source\countries_population.Report
+canvas:
+  width: 1280
+  height: 720
+  gutter: 4
+pages:
+- id: 3985c179880bcb995b7b
+  display_name: Home
+  rows:
+  - id: page_header_row
+    height: 64
+    cols:
+    - ref: page_header
+  - id: row0
+    height: 54
+    cols:
+    - ref: page_menu
+      rowspan: 4
+    - span: 4
+      name: ec6e1cbbba33c02cabe2
+      visual: slicer
+      border: true
+  - id: row1
+    height: 77
+    cols:
+    - span: 2
+      name: a4846476c7c4ecf40eed
+      visual: cardVisual
+      border: true
+      valign: center
+    - span: 2
+      name: 4efb01a1c40acd7aaaaa
+      visual: cardVisual
+      border: true
+      valign: center
+    - span: 2
+      name: 6df6d06f2436db6cc38f
+      visual: cardVisual
+      border: true
+      valign: center
+    - span: 4
+      name: d1e351bb7aa2abdf1019
+      visual: donutChart
+      border: true
+      rowspan: 2
+  - id: row2
+    height: 83
+    cols:
+    - span: 2
+      name: 045e77050a365adafd01
+      visual: cardVisual
+      border: true
+      valign: center
+    - span: 2
+      name: fe94385a4a38c907e609
+      visual: cardVisual
+      border: true
+      valign: center
+    - span: 2
+      name: 15fa508e26dd357c3d32
+      visual: cardVisual
+      border: true
+      valign: center
+  - id: row3
+    height: 210
+    cols:
+    - span: 10
+      name: 0b7a56fb5e2248eced49
+      visual: tableEx
+      border: true
+  - id: page_footer_row
+    height: 232
+    cols:
+    - ref: page_footer
+- id: ce5171dd05725fe3c635
+  display_name: Menu Item 01
+  rows:
+  - id: page_header_row
+    height: 64
+    cols:
+    - ref: page_header
+  - id: row0
+    height: 424
+    cols:
+    - ref: page_menu
+      rowspan: 1
+    - span: 5
+      name: 27a43da6f1a616a8c322
+      visual: barChart
+      border: true
+  - id: page_footer_row
+    height: 232
+    cols:
+    - ref: page_footer
+- id: e96f9b64f98975ecafec
+  display_name: Menu Item 02
+  rows:
+  - id: page_header_row
+    height: 64
+    cols:
+    - ref: page_header
+  - id: page_footer_row
+    height: 232
+    cols:
+    - ref: page_footer
+- id: f75772adfbecc1c720ae
+  display_name: Menu Item 03
+  rows:
+  - id: page_header_row
+    height: 64
+    cols:
+    - ref: page_header
+  - id: page_footer_row
+    height: 232
+    cols:
+    - ref: page_footer
+- id: 89b5620bbf7060dbc3ee
+  display_name: Menu Item 04
+  rows:
+  - id: page_header_row
+    height: 64
+    cols:
+    - ref: page_header
+  - id: page_footer_row
+    height: 232
+    cols:
+    - ref: page_footer
+- id: e37adb3987402db22578
+  display_name: Menu Item 05
+  rows:
+  - id: page_header_row
+    height: 64
+    cols:
+    - ref: page_header
+  - id: page_footer_row
+    height: 232
+    cols:
+    - ref: page_footer
+package: govbr
+shared:
+  components:
+    page_header:
+      span: 12
+      component: header
+      logo_path: imgs/govbr_header.png
+      logo_align: left
+      title: Sample GovBR Theme
+      subtitle: "Digital Government Standard"
+    page_footer:
+      span: 12
+      component: footer
+      logo_path: imgs/govbr_footer.png
+      logo_height: 30
+      links:
+      - title: Column 1
+        items:
+        - label: Link 1
+          url: ''
+        - label: Link 2
+          url: ''
+      - title: Column 2
+        items:
+        - label: Link 3
+          url: ''
+        - label: Link 4
+          url: ''
+    page_menu:
+      span: 2
+      component: menu
+      orientation: vertical
+      items:
+      - page: Home
+      - separator: true
+      - page: Menu Item 01

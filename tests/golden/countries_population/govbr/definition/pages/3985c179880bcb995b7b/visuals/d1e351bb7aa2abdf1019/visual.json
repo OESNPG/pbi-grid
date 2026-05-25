@@ -1,0 +1,121 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "d1e351bb7aa2abdf1019",
+  "position": {
+    "height": 156.0,
+    "tabOrder": 7000,
+    "width": 422.6667,
+    "x": 855.3333,
+    "y": 120.0,
+    "z": 7000
+  },
+  "visual": {
+    "drillFilterOtherVisuals": true,
+    "objects": {
+      "legend": [
+        {
+          "properties": {
+            "position": {
+              "expr": {
+                "Literal": {
+                  "Value": "'BottomCenter'"
+                }
+              }
+            },
+            "titleText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Continent'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "query": {
+      "queryState": {
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_geolocation"
+                    }
+                  },
+                  "Property": "continent"
+                }
+              },
+              "nativeQueryRef": "continent",
+              "queryRef": "dim_geolocation.continent"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_population"
+                        }
+                      },
+                      "Property": "population"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "nativeQueryRef": "Soma de population",
+              "queryRef": "Sum(fact_population.population)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "isDefaultSort": true,
+        "sort": [
+          {
+            "direction": "Descending",
+            "field": {
+              "Aggregation": {
+                "Expression": {
+                  "Column": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "fact_population"
+                      }
+                    },
+                    "Property": "population"
+                  }
+                },
+                "Function": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Continent Distribution'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualType": "donutChart"
+  }
+}

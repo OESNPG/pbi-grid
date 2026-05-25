@@ -1,11 +1,11 @@
-import json
+﻿import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from .position import Position
 
-_SCHEMA = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json"
+_SCHEMA = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json"
 
 
 @dataclass
@@ -39,7 +39,7 @@ class Visual:
     def to_pbir(self, path: Path) -> None:
         path.mkdir(parents=True, exist_ok=True)
         (path / "visual.json").write_text(
-            json.dumps(self.to_dict(), indent=2, ensure_ascii=False),
+            json.dumps(self.to_dict(), indent=2, ensure_ascii=False, sort_keys=True),
             encoding="utf-8",
         )
 

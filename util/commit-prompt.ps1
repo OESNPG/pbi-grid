@@ -57,7 +57,7 @@ if ($issueMatch.Success) {
 # ── Collect diff ───────────────────────────────────────────────────────────────
 
 $FILES      = (git diff --name-only --cached) -join "`n"
-$FILE_COUNT = (git diff --name-only --cached).Count
+$FILE_COUNT = @(git diff --name-only --cached).Count
 $DIFF       = (git diff --cached --unified=3) -join "`n"
 
 $DIFF_TRUNCATED = ''

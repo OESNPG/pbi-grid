@@ -1,0 +1,30 @@
+canvas:
+  gutter: 4
+
+visuals:
+  cardVisual:
+    border: true
+    valign: center
+  tableEx:
+    border: true
+  columnChart:
+    border: true
+  barChart:
+    border: true
+  donutChart:
+    border: true
+  lineChart:
+    border: true
+  pivotTable:
+    border: true
+  slicer:
+    border: true
+
+components:
+  menu:
+    separator_between_items: true
+  header:
+    logo_path: imgs/powerbi_header.png
+    logo_align: left
+  footer:
+    logo_path: imgs/powerbi_footer.png

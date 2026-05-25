@@ -1,0 +1,104 @@
+table dim_geolocation
+	lineageTag: 6da9fa37-3169-42e2-a851-6db553d45ec6
+
+	column geo_id
+		dataType: int64
+		formatString: 0
+		lineageTag: eff9e5df-51d6-46d3-bfd7-423a6c63f002
+		summarizeBy: none
+		sourceColumn: geo_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column country
+		dataType: string
+		lineageTag: bc8918b8-f6bf-4163-9a7f-92240763e5c2
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	column iso_code
+		dataType: string
+		lineageTag: 05261082-4dd2-4b3e-8f40-66d84b7b51e4
+		summarizeBy: none
+		sourceColumn: iso_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column continent
+		dataType: string
+		lineageTag: 5c85b24d-33e4-4d23-97fa-14cb2525bf53
+		summarizeBy: none
+		sourceColumn: continent
+
+		annotation SummarizationSetBy = Automatic
+
+	column latitude
+		dataType: double
+		lineageTag: 86cba622-16b9-4ee5-a525-4a6a5560dcf9
+		summarizeBy: none
+		sourceColumn: latitude
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column longitude
+		dataType: double
+		lineageTag: 7a9c1d27-a4ac-4655-8fe2-da72027d2b56
+		summarizeBy: none
+		sourceColumn: longitude
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition dim_geolocation = m
+		mode: import
+		source =
+				// === SYNTHETIC TEST DATA — FICTITIOUS ===
+				// Generated for testing/development only.
+				// 'population' values are artificial and do NOT reflect real data.
+				// Do not use for analysis or decision-making.
+				
+				let
+				    Source = #table(
+				        type table [
+				            geo_id = Int64.Type,
+				            country = text,
+				            iso_code = text,
+				            continent = text,
+				            latitude = number,
+				            longitude = number
+				        ],
+				        {
+				            {1,  "Brazil",         "BRA", "South America",  -14.2350,  -51.9253},
+				            {2,  "Argentina",      "ARG", "South America",  -38.4161,  -63.6167},
+				            {3,  "United States",  "USA", "North America",   37.0902,  -95.7129},
+				            {4,  "Canada",         "CAN", "North America",   56.1304, -106.3468},
+				            {5,  "Mexico",         "MEX", "North America",   23.6345, -102.5528},
+				            {6,  "Germany",        "DEU", "Europe",          51.1657,   10.4515},
+				            {7,  "France",         "FRA", "Europe",          46.2276,    2.2137},
+				            {8,  "United Kingdom", "GBR", "Europe",          55.3781,   -3.4360},
+				            {9,  "Spain",          "ESP", "Europe",          40.4637,   -3.7492},
+				            {10, "Italy",          "ITA", "Europe",          41.8719,   12.5674},
+				            {11, "Nigeria",        "NGA", "Africa",           9.0820,    8.6753},
+				            {12, "South Africa",   "ZAF", "Africa",         -30.5595,   22.9375},
+				            {13, "Egypt",          "EGY", "Africa",          26.8206,   30.8025},
+				            {14, "China",          "CHN", "Asia",            35.8617,  104.1954},
+				            {15, "India",          "IND", "Asia",            20.5937,   78.9629},
+				            {16, "Japan",          "JPN", "Asia",            36.2048,  138.2529},
+				            {17, "Indonesia",      "IDN", "Asia",            -0.7893,  113.9213},
+				            {18, "Australia",      "AUS", "Oceania",        -25.2744,  133.7751},
+				            {19, "Saudi Arabia",   "SAU", "Asia",            23.8859,   45.0792},
+				            {20, "Turkey",         "TUR", "Asia",            38.9637,   35.2433}
+				        }
+				    )
+				in
+				    Source
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

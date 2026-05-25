@@ -1,0 +1,117 @@
+{
+  "background": "#FFFFFF",
+  "bad": "#E52207",
+  "center": "#2670E8",
+  "dataColors": [
+    "#1351B4",
+    "#071D41",
+    "#0C326F",
+    "#2670E8",
+    "#168821",
+    "#E52207",
+    "#FFCD07",
+    "#5E97F6",
+    "#9FB8F0",
+    "#155BCB"
+  ],
+  "firstLevelElements": "#071D41",
+  "fourthLevelElements": "#888888",
+  "good": "#168821",
+  "maximum": "#071D41",
+  "minimum": "#E8F0FB",
+  "name": "govbr",
+  "neutral": "#FFCD07",
+  "null": "#CCCCCC",
+  "secondLevelElements": "#333333",
+  "secondaryBackground": "#F8F8F8",
+  "tableAccent": "#1351B4",
+  "textClasses": {
+    "callout": {
+      "color": "#1351B4",
+      "fontFace": "Rawline",
+      "fontSize": 20
+    },
+    "header": {
+      "color": "#071D41",
+      "fontFace": "Rawline",
+      "fontSize": 11
+    },
+    "label": {
+      "color": "#071D41",
+      "fontFace": "Rawline",
+      "fontSize": 10
+    },
+    "title": {
+      "color": "#071D41",
+      "fontFace": "Rawline",
+      "fontSize": 14
+    }
+  },
+  "thirdLevelElements": "#F8F8F8",
+  "visualStyles": {
+    "*": {
+      "*": {
+        "categoryAxis": [
+          {
+            "gridlineColor": {
+              "solid": {
+                "color": "#F8F8F8"
+              }
+            },
+            "gridlineStyle": "dotted",
+            "labelColor": {
+              "solid": {
+                "color": "#071D41"
+              }
+            }
+          }
+        ],
+        "dataLabels": [
+          {
+            "color": {
+              "solid": {
+                "color": "#071D41"
+              }
+            }
+          }
+        ],
+        "legend": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#071D41"
+              }
+            }
+          }
+        ],
+        "title": [
+          {
+            "bold": true,
+            "fontColor": {
+              "solid": {
+                "color": "#071D41"
+              }
+            },
+            "fontFamily": "Rawline",
+            "fontSize": 11
+          }
+        ],
+        "valueAxis": [
+          {
+            "gridlineColor": {
+              "solid": {
+                "color": "#F8F8F8"
+              }
+            },
+            "gridlineStyle": "dotted",
+            "labelColor": {
+              "solid": {
+                "color": "#071D41"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

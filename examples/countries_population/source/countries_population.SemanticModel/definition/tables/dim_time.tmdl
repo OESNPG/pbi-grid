@@ -1,0 +1,70 @@
+table dim_time
+	lineageTag: f7fde88c-a087-4fbe-acce-30bcb139a162
+
+	column time_id
+		dataType: int64
+		formatString: 0
+		lineageTag: d1bbd89d-6bee-4964-8427-5171a8225ba3
+		summarizeBy: none
+		sourceColumn: time_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column year
+		dataType: int64
+		formatString: 0
+		lineageTag: 843e74d7-5403-484a-beb4-4667e3af0556
+		summarizeBy: none
+		sourceColumn: year
+
+		annotation SummarizationSetBy = Automatic
+
+	column decade
+		dataType: int64
+		formatString: 0
+		lineageTag: d5546a0a-5a58-4af9-9d82-35c221db87b7
+		summarizeBy: none
+		sourceColumn: decade
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_leap_year
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 33478da6-04c1-422f-96b8-b3ccd3774b28
+		summarizeBy: none
+		sourceColumn: is_leap_year
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_time = m
+		mode: import
+		source =
+				// === SYNTHETIC TEST DATA — FICTITIOUS ===
+				// Generated for testing/development only.
+				// 'population' values are artificial and do NOT reflect real data.
+				// Do not use for analysis or decision-making.
+				
+				let
+				    Source = #table(
+				        type table [
+				            time_id = Int64.Type,
+				            year = Int64.Type,
+				            decade = Int64.Type,
+				            is_leap_year = logical
+				        ],
+				        {
+				            {2020, 2020, 2020, true},
+				            {2021, 2021, 2020, false},
+				            {2022, 2022, 2020, false},
+				            {2023, 2023, 2020, false},
+				            {2024, 2024, 2020, true}
+				        }
+				    )
+				in
+				    Source
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

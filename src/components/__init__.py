@@ -11,14 +11,30 @@ _REGISTRY: dict[str, type[Component]] = {
     "footer": FooterComponent,
 }
 
+DEFAULT_HEIGHTS: dict[str, int] = {
+    "header": 64,
+    "footer": 232,
+    "menu": 424,
+}
+
+DEFAULT_SPANS: dict[str, int] = {
+    "header": 12,
+    "footer": 12,
+    "menu": 2,
+}
+
 
 def _parse_menu_items(raw: list[dict]) -> list[MenuItem]:
     items = []
     for i in raw:
+        if i.get("separator"):
+            items.append(MenuItem(is_separator=True))
+            continue
         sub_raw = i.get("items", [])
         items.append(MenuItem(
-            page=i["page"],
+            page=i.get("page", ""),
             description=i.get("description", ""),
+            icon=i.get("icon", ""),
             items=_parse_menu_items(sub_raw) if sub_raw else [],
         ))
     return items
@@ -43,6 +59,12 @@ def resolve_component(
             title=props.get("title", ""),
             subtitle=props.get("subtitle", ""),
             tokens=tokens or {},
+            theme_dir=theme_dir,
+            logo_path=props.get("logo_path", ""),
+            logo_width=int(props.get("logo_width", 0)),
+            logo_height=int(props.get("logo_height", 0)),
+            logo_align=props.get("logo_align", ""),
+            logo_alt_text=props.get("logo_alt_text", ""),
         )
 
     if cls is MenuComponent:
@@ -52,6 +74,7 @@ def resolve_component(
             orientation=props.get("orientation", "vertical"),
             page_id_map=page_id_map,
             tokens=tokens or {},
+            theme_dir=theme_dir,
         )
 
     if cls is FooterComponent:
@@ -70,9 +93,19 @@ def resolve_component(
             theme_dir=theme_dir,
             logo_path=props.get("logo_path", ""),
             logo_height=int(props.get("logo_height", 0)),
+            logo_alt_text=props.get("logo_alt_text", ""),
         )
 
     raise ValueError(f"No factory defined for component '{name}'")
+
+
+def _collect_menu_icons(item: dict, candidates: list[str]) -> None:
+    """Recursively collect icon filenames from a raw menu item dict."""
+    icon = item.get("icon", "")
+    if icon:
+        candidates.append(icon)
+    for sub in item.get("items", []):
+        _collect_menu_icons(sub, candidates)
 
 
 __all__ = [
@@ -81,4 +114,5 @@ __all__ = [
     "MenuComponent", "MenuItem",
     "FooterComponent", "FooterLink", "FooterLinkGroup",
     "resolve_component",
+    "_collect_menu_icons",
 ]

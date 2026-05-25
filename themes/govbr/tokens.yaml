@@ -4,15 +4,16 @@ header:
   background_color: "#FFFFFF"          # branco — fundo padrão govbr
   title_color: "#071D41"               # blue-warm-vivid-90 — título sobre fundo branco
   title_font_size: 14                  # pt — título principal
-  subtitle_color: "#1351B4"            # blue-warm-vivid-70 — subtítulo/org
+  subtitle_color: "#7c7c7c"            # blue-warm-vivid-70 — subtítulo/org
   subtitle_font_size: 10               # pt
-  accent_color: "#1351B4"              # azul primário — borda inferior de identidade
-  accent_height: 2                     # px — espessura da borda inferior
+  accent_color: "#E0E0E0"              # azul primário — borda inferior de identidade
+  accent_height: 1                     # px — espessura da borda inferior
 
 footer:
   logo_path: "govbr.png"               # relative to themes/govbr/ — copied to RegisteredResources
   logo_width: 165                      # px — matches govbr CSS width
   logo_height: 60                      # px — matches govbr CSS height
+  logo_alt_text: "Governo Federal do Brasil"  # WCAG 1.1.1 — text alternative for decorative logo
   background_color: "#071D41"          # blue-warm-vivid-90 — dark navy GovBR footer
   title_color: "#FFFFFF"               # white — category headers
   title_font_size: 10
@@ -28,13 +29,105 @@ footer:
 menu:
   background_color: "#FFFFFF"          # white card behind all menu items
   item_height: 48                      # px per item — menu sizes to content, not to rowspan
+  icon_size: 32                        # px — icon width and height
+  divider_color: "#E0E0E0"             # right-edge vertical separator
+  divider_weight: 1                    # px
   header:
     font_color: "#071D41"              # blue-warm-vivid-90 — dark, no fill (transparent header)
   item:
-    font_color_default: "#1351B4"      # --interactive (blue-warm-vivid-70)
-    font_color_hover: "#1351B4"        # same — GOVBR DS keeps text color on hover
+    font_color_default: "#333333"
+    font_color_hover: "#333333"
     font_color_selected: "#FFFFFF"     # white on dark background
     fill_color_default: "#F8F8F8"      # --gray-2 — submenu background for child items
     fill_color_hover: "#1351B4"        # --interactive at 84% transparent (16% opacity)
     fill_color_selected: "#0C326F"     # --active (blue-warm-vivid-80) — darker selected state
     outline_color: "#1351B4"
+
+layout:
+  border_color: "#E0E0E0"
+  border_weight: 1
+  border_radius: 8                     # px → % passed to PBI cornerRounding (0 = sharp)
+
+palette:
+  name: "govbr"
+
+  dataColors:
+    - "#1351B4"   # blue-warm-vivid-70  — primary interactive (series 1)
+    - "#071D41"   # blue-warm-vivid-90  — dark navy (series 2)
+    - "#0C326F"   # blue-warm-vivid-80  — active state (series 3)
+    - "#2670E8"   # blue-warm-vivid-60  — medium blue (series 4)
+    - "#168821"   # green-cool-vivid-50 — positive/success (series 5)
+    - "#E52207"   # red-warm-vivid-50   — negative/alert (series 6)
+    - "#FFCD07"   # yellow-vivid-20     — warning/neutral (series 7)
+    - "#5E97F6"   # blue-warm-vivid-40  — light blue (series 8)
+    - "#9FB8F0"   # blue-warm-vivid-30  — pale blue (series 9)
+    - "#155BCB"   # blue-warm-vivid-65  — alt blue (series 10)
+
+  firstLevelElements: "#071D41"
+  secondLevelElements: "#333333"
+  thirdLevelElements: "#F8F8F8"
+  fourthLevelElements: "#888888"
+  background: "#FFFFFF"
+  secondaryBackground: "#F8F8F8"
+  tableAccent: "#1351B4"
+
+  good: "#168821"
+  neutral: "#FFCD07"
+  bad: "#E52207"
+  maximum: "#071D41"   # navy escuro — valores altos em escalas sequenciais
+  center: "#2670E8"    # azul médio — ponto intermediário
+  minimum: "#E8F0FB"   # azul muito claro — valores baixos
+  "null": "#CCCCCC"
+
+  textClasses:
+    label:
+      fontSize: 10
+      fontFace: "Rawline"
+      color: "#071D41"
+    title:
+      fontSize: 14
+      fontFace: "Rawline"
+      color: "#071D41"
+    callout:
+      fontSize: 20
+      fontFace: "Rawline"
+      color: "#1351B4"
+    header:
+      fontSize: 11
+      fontFace: "Rawline"
+      color: "#071D41"
+
+  visualStyles:
+    "*":
+      "*":
+        title:
+          - fontColor:
+              solid:
+                color: "#071D41"
+            fontSize: 11
+            fontFamily: "Rawline"
+            bold: true
+        categoryAxis:
+          - labelColor:
+              solid:
+                color: "#071D41"
+            gridlineColor:
+              solid:
+                color: "#F8F8F8"
+            gridlineStyle: "dotted"
+        valueAxis:
+          - labelColor:
+              solid:
+                color: "#071D41"
+            gridlineColor:
+              solid:
+                color: "#F8F8F8"
+            gridlineStyle: "dotted"
+        legend:
+          - fontColor:
+              solid:
+                color: "#071D41"
+        dataLabels:
+          - color:
+              solid:
+                color: "#071D41"

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.3.0/schema.json",
+  "objects": {
+    "outspacePane": [
+      {
+        "properties": {
+          "expanded": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "section": [
+      {
+        "properties": {
+          "verticalAlignment": {
+            "expr": {
+              "Literal": {
+                "Value": "'Top'"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "resourcePackages": [
+    {
+      "items": [
+        {
+          "name": "default",
+          "path": "BaseThemes/default.json",
+          "type": "BaseTheme"
+        }
+      ],
+      "name": "SharedResources",
+      "type": "SharedResources"
+    },
+    {
+      "items": [
+        {
+          "name": "defaultcustom.json",
+          "path": "defaultcustom.json",
+          "type": "CustomTheme"
+        },
+        {
+          "name": "powerbi_footer.png",
+          "path": "powerbi_footer.png",
+          "type": "Image"
+        },
+        {
+          "name": "powerbi_header.png",
+          "path": "powerbi_header.png",
+          "type": "Image"
+        }
+      ],
+      "name": "RegisteredResources",
+      "type": "RegisteredResources"
+    }
+  ],
+  "settings": {
+    "allowChangeFilterTypes": true,
+    "defaultDrillFilterOtherVisuals": true,
+    "exportDataMode": "AllowSummarized",
+    "useDefaultAggregateDisplayName": true,
+    "useEnhancedTooltips": true,
+    "useStylableVisualContainerHeader": true
+  },
+  "themeCollection": {
+    "baseTheme": {
+      "name": "default",
+      "reportVersionAtImport": {
+        "page": "2.3.1",
+        "report": "3.2.0",
+        "visual": "2.8.0"
+      },
+      "type": "SharedResources"
+    },
+    "customTheme": {
+      "name": "defaultcustom.json",
+      "reportVersionAtImport": {
+        "page": "2.3.1",
+        "report": "3.3.0",
+        "visual": "2.9.0"
+      },
+      "type": "RegisteredResources"
+    }
+  }
+}

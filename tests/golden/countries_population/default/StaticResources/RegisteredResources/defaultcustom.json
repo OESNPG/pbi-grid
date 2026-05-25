@@ -1,0 +1,118 @@
+{
+  "background": "#FFFFFF",
+  "bad": "#A4262C",
+  "center": "#4472C4",
+  "dataColors": [
+    "#4472C4",
+    "#ED7D31",
+    "#A9D18E",
+    "#FF0000",
+    "#FFC000",
+    "#5B9BD5",
+    "#70AD47",
+    "#264478",
+    "#9E480E",
+    "#636363"
+  ],
+  "firstLevelElements": "#252423",
+  "fourthLevelElements": "#8A8886",
+  "good": "#107C10",
+  "hyperlink": "#118DFF",
+  "maximum": "#252423",
+  "minimum": "#DEEAF1",
+  "name": "default",
+  "neutral": "#FFC000",
+  "null": "#CCCCCC",
+  "secondLevelElements": "#605E5C",
+  "secondaryBackground": "#F3F2F1",
+  "tableAccent": "#4472C4",
+  "textClasses": {
+    "callout": {
+      "color": "#252423",
+      "fontFace": "DIN",
+      "fontSize": 45
+    },
+    "header": {
+      "color": "#252423",
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 12
+    },
+    "label": {
+      "color": "#252423",
+      "fontFace": "Segoe UI",
+      "fontSize": 10
+    },
+    "title": {
+      "color": "#252423",
+      "fontFace": "Segoe UI Bold",
+      "fontSize": 14
+    }
+  },
+  "thirdLevelElements": "#C8C6C4",
+  "visualStyles": {
+    "*": {
+      "*": {
+        "categoryAxis": [
+          {
+            "gridlineColor": {
+              "solid": {
+                "color": "#C8C6C4"
+              }
+            },
+            "gridlineStyle": "dotted",
+            "labelColor": {
+              "solid": {
+                "color": "#605E5C"
+              }
+            }
+          }
+        ],
+        "dataLabels": [
+          {
+            "color": {
+              "solid": {
+                "color": "#252423"
+              }
+            }
+          }
+        ],
+        "legend": [
+          {
+            "fontColor": {
+              "solid": {
+                "color": "#605E5C"
+              }
+            }
+          }
+        ],
+        "title": [
+          {
+            "bold": true,
+            "fontColor": {
+              "solid": {
+                "color": "#252423"
+              }
+            },
+            "fontFamily": "Segoe UI",
+            "fontSize": 11
+          }
+        ],
+        "valueAxis": [
+          {
+            "gridlineColor": {
+              "solid": {
+                "color": "#C8C6C4"
+              }
+            },
+            "gridlineStyle": "dotted",
+            "labelColor": {
+              "solid": {
+                "color": "#605E5C"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "0b7a56fb5e2248eced49",
+  "position": {
+    "height": 206.0,
+    "tabOrder": 11000,
+    "width": 1062.6667,
+    "x": 215.3333,
+    "y": 280.0,
+    "z": 11000
+  },
+  "visual": {
+    "drillFilterOtherVisuals": true,
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "displayName": "Year",
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_time"
+                    }
+                  },
+                  "Property": "year"
+                }
+              },
+              "nativeQueryRef": "Year",
+              "queryRef": "dim_time.year"
+            },
+            {
+              "displayName": "Continent",
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_geolocation"
+                    }
+                  },
+                  "Property": "continent"
+                }
+              },
+              "nativeQueryRef": "Continent",
+              "queryRef": "dim_geolocation.continent"
+            },
+            {
+              "displayName": "ID",
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_geolocation"
+                    }
+                  },
+                  "Property": "geo_id"
+                }
+              },
+              "nativeQueryRef": "ID",
+              "queryRef": "dim_geolocation.geo_id"
+            },
+            {
+              "displayName": "Country",
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_geolocation"
+                    }
+                  },
+                  "Property": "country"
+                }
+              },
+              "nativeQueryRef": "Country",
+              "queryRef": "dim_geolocation.country"
+            },
+            {
+              "displayName": "ISO Code",
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_geolocation"
+                    }
+                  },
+                  "Property": "iso_code"
+                }
+              },
+              "nativeQueryRef": "ISO Code",
+              "queryRef": "dim_geolocation.iso_code"
+            },
+            {
+              "displayName": "latitude",
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_geolocation"
+                    }
+                  },
+                  "Property": "latitude"
+                }
+              },
+              "nativeQueryRef": "latitude",
+              "queryRef": "dim_geolocation.latitude"
+            },
+            {
+              "displayName": "Longitude",
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_geolocation"
+                    }
+                  },
+                  "Property": "longitude"
+                }
+              },
+              "nativeQueryRef": "Longitude",
+              "queryRef": "dim_geolocation.longitude"
+            },
+            {
+              "displayName": "Population Estimated",
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_population"
+                        }
+                      },
+                      "Property": "population"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "nativeQueryRef": "Population Estimated",
+              "queryRef": "Sum(fact_population.population)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "direction": "Ascending",
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "dim_time"
+                  }
+                },
+                "Property": "year"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "visualType": "tableEx"
+  }
+}

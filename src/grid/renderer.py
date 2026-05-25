@@ -1,4 +1,4 @@
-import json
+﻿import json
 import shutil
 from pathlib import Path
 
@@ -15,7 +15,7 @@ def _write_pbip(report: Report, project_dir: Path) -> None:
         "settings": {"enableAutoRecovery": True},
     }
     (project_dir / f"{report.name}.pbip").write_text(
-        json.dumps(pbip, indent=2, ensure_ascii=False),
+        json.dumps(pbip, indent=2, ensure_ascii=False, sort_keys=True),
         encoding="utf-8",
     )
 

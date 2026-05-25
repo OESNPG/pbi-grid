@@ -6,12 +6,9 @@ __pycache__/
 dist/
 build/
 
-# Output
-output/
-output.zip
-
 # OS
 .DS_Store
+Thumbs.db
 
 # IDE
 .vscode/
@@ -19,3 +16,16 @@ output.zip
 
 # Claude
 .claude/
+
+# Output
+output/
+
+# Tests
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Power BI local state (machine-specific, may contain credential tokens)
+**/.pbi/
+**/diagramLayout.json

@@ -1,4 +1,4 @@
-import json
+﻿import json
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -45,7 +45,7 @@ class Page:
     def to_pbir(self, path: Path) -> None:
         path.mkdir(parents=True, exist_ok=True)
         (path / "page.json").write_text(
-            json.dumps(self.to_dict(), indent=2, ensure_ascii=False),
+            json.dumps(self.to_dict(), indent=2, ensure_ascii=False, sort_keys=True),
             encoding="utf-8",
         )
         visuals_path = path / "visuals"

@@ -1,13 +1,13 @@
-"""
-Extract a layout.yaml from an existing PBIR report.
+"""Extract a layout.yaml from an existing PBIR report.
 
 Algorithm
 ---------
 1. For each page, collect all visuals with their absolute positions.
 2. Cluster y-start values (within CLUSTER_TOL units) to identify row bands.
 3. Assign each visual to its starting row band and compute:
-   - span  = round(width / col_unit), clamped to [1, 12]
-   - rowspan = number of row bands the visual covers
+   - span = round(width / col_unit), clamped to [1, 12]
+   rowspan is intentionally not inferred — it is a layout design decision
+   left to the user or set by scaffold for components (menu, header, footer).
 4. Within each row, sort visuals by x.
 5. Emit a YAML dict with real visual names (PBIR IDs) and inferred spans.
 """
@@ -29,7 +29,7 @@ _CLUSTER_TOL = 5.0  # canvas units below which two y values are the same row
 # ── Row-band inference ──────────────────────────────────────────────────────────
 
 def _cluster_y(values: list[float]) -> list[float]:
-    """Return sorted unique row-start y values after clustering near-identical values."""
+    """Return sorted unique row-start y values after merging near-identical values."""
     clusters: list[float] = []
     for v in sorted(set(values)):
         if not clusters or v - clusters[-1] > _CLUSTER_TOL:
@@ -38,6 +38,7 @@ def _cluster_y(values: list[float]) -> list[float]:
 
 
 def _row_heights(row_starts: list[float], canvas_height: int) -> list[float]:
+    """Compute pixel height of each row band from consecutive y-start values."""
     heights: list[float] = []
     for i, start in enumerate(row_starts):
         next_start = row_starts[i + 1] if i + 1 < len(row_starts) else canvas_height
@@ -46,6 +47,7 @@ def _row_heights(row_starts: list[float], canvas_height: int) -> list[float]:
 
 
 def _find_row_idx(y: float, row_starts: list[float]) -> int:
+    """Return the index of the row band whose y-start is closest to *y*."""
     best_i, best_d = 0, abs(y - row_starts[0])
     for i, start in enumerate(row_starts[1:], 1):
         d = abs(y - start)
@@ -54,23 +56,8 @@ def _find_row_idx(y: float, row_starts: list[float]) -> int:
     return best_i
 
 
-def _infer_rowspan(
-    visual_y: float,
-    visual_height: float,
-    row_idx: int,
-    row_starts: list[float],
-    row_heights: list[float],
-) -> int:
-    bottom = visual_y + visual_height
-    cumulative = row_starts[row_idx]
-    for i in range(row_idx, len(row_heights)):
-        cumulative += row_heights[i]
-        if cumulative >= bottom - _CLUSTER_TOL:
-            return i - row_idx + 1
-    return len(row_heights) - row_idx
-
-
 def _infer_span(width: float, col_unit: float) -> int:
+    """Round visual width to the nearest grid span, clamped to [1, 12]."""
     return max(1, min(_GRID_COLUMNS, round(width / col_unit)))
 
 
@@ -81,12 +68,12 @@ def _infer_page_rows(
     canvas_width: int,
     canvas_height: int,
 ) -> list[dict[str, Any]]:
+    """Infer grid rows and col spans from the absolute positions of page visuals."""
     col_unit = canvas_width / _GRID_COLUMNS
 
     row_starts = _cluster_y([v.position.y for v in visuals])
     row_hts = _row_heights(row_starts, canvas_height)
 
-    # Bin each visual into its starting row.
     bins: dict[int, list[Visual]] = {i: [] for i in range(len(row_starts))}
     for v in visuals:
         bins[_find_row_idx(v.position.y, row_starts)].append(v)
@@ -95,33 +82,89 @@ def _infer_page_rows(
     for row_idx, row_visuals in bins.items():
         if not row_visuals:
             continue
-
         row_visuals.sort(key=lambda v: v.position.x)
-        height = math.ceil(row_hts[row_idx])
-
-        cols: list[dict[str, Any]] = []
-        for v in row_visuals:
-            span = _infer_span(v.position.width, col_unit)
-            rowspan = _infer_rowspan(
-                v.position.y, v.position.height,
-                row_idx, row_starts, row_hts,
-            )
-            col: dict[str, Any] = {
-                "span": span,
-                "name": v.name,
-                "visual": v.visual_type,
-            }
-            if rowspan > 1:
-                col["rowspan"] = rowspan
-            cols.append(col)
-
+        cols: list[dict[str, Any]] = [
+            {"span": _infer_span(v.position.width, col_unit), "name": v.name, "visual": v.visual_type}
+            for v in row_visuals
+        ]
         rows.append({
             "id": f"row{row_idx}",
-            "height": height,
+            "height": math.ceil(row_hts[row_idx]),
             "cols": cols,
         })
 
     return rows
+
+
+# ── Validation ─────────────────────────────────────────────────────────────────
+
+def validate_layout(data: dict) -> None:
+    """Print a height-budget report and auto-fit canvas.height to the tallest page."""
+    canvas_height: int = data.get("canvas", {}).get("height", 720)
+    pages: list[dict] = data.get("pages", [])
+    if not pages:
+        return
+
+    totals = {
+        p.get("display_name", p["id"]): sum(r.get("height", 0) for r in p.get("rows", []))
+        for p in pages
+    }
+    max_height = max(totals.values(), default=canvas_height)
+
+    if max_height != canvas_height:
+        data.setdefault("canvas", {})["height"] = max_height
+        print(f"\n  canvas.height adjusted: {canvas_height}px → {max_height}px")
+        canvas_height = max_height
+
+    col_w = max(len(name) for name in totals)
+    sep = "─" * (col_w + 36)
+
+    print(f"\n── Layout height validation  (canvas: {canvas_height}px) ──")
+    print(f"  {'Page':<{col_w}}   Total    Delta")
+    print(f"  {sep}")
+
+    issues = 0
+    for name, total in totals.items():
+        diff = total - canvas_height
+        if diff == 0:
+            marker, note = "✓", ""
+        elif diff > 0:
+            marker, note, issues = "▲", f"  +{diff}px  OVERFLOW", issues + 1
+        else:
+            marker, note, issues = "▼", f"  {diff}px  underflow", issues + 1
+        print(f"  {marker} {name:<{col_w}}  {total:>4}px{note}")
+
+    print(f"  {sep}")
+    if issues == 0:
+        print("  All pages fit the canvas.")
+    else:
+        print(f"  {issues} page(s) with height mismatch — adjust row heights before running generate.")
+
+    _validate_spans(data)
+
+
+def _validate_spans(data: dict) -> None:
+    """Warn when any row's explicit span sum exceeds 12 columns.
+
+    Note: rowspan carry from menu/sidebar columns is NOT counted here —
+    actual overflow at render time may be larger than reported.
+    """
+    issues: list[str] = []
+    for page in data.get("pages", []):
+        page_name = page.get("display_name", page["id"])
+        for row in page.get("rows", []):
+            total = sum(c.get("span", 0) for c in row.get("cols", []) if "span" in c)
+            if total > 12:
+                issues.append(
+                    f"  ▲ page '{page_name}' / row '{row.get('id', '?')}': span sum = {total} > 12"
+                )
+
+    if issues:
+        print(f"\n── Column span validation ──")
+        for msg in issues:
+            print(msg)
+        print(f"  {len(issues)} row(s) with column overflow — fix spans before running generate.")
+        print(f"  Note: rowspan carry from menu/sidebar is NOT counted; actual overflow may be larger.")
 
 
 # ── Public API ──────────────────────────────────────────────────────────────────
@@ -147,19 +190,12 @@ def extract(
     """
     report = Report.from_pbir(report_path)
 
-    # Load existing page configs keyed by page ID so we can preserve them.
-    existing_pages: dict[str, dict[str, Any]] = {}
-    existing_top: dict[str, Any] = {}
-    if merge_with and merge_with.exists():
-        existing_top = yaml.safe_load(merge_with.read_text(encoding="utf-8")) or {}
-        for page in existing_top.get("pages", []):
-            existing_pages[page["id"]] = page
+    existing_top, existing_pages = _load_existing(merge_with)
 
     pages_data: list[dict[str, Any]] = []
     for page in report.pages:
         if page.name in existing_pages:
-            # Preserve the existing config (component definitions, menu items, etc.)
-            pages_data.append(existing_pages[page.name])
+            pages_data.append(_merge_page(page, existing_pages[page.name]))
         else:
             rows = _infer_page_rows(page.visuals, page.width, page.height)
             pages_data.append({
@@ -169,25 +205,62 @@ def extract(
             })
 
     if output is None:
-        output = report_path.parent / f"{report.name}_layout.yaml"
+        output = merge_with if merge_with else report_path.parent / f"{report.name}_layout.yaml"
 
     import os
     source_rel = os.path.relpath(report_path.resolve(), output.parent.resolve())
 
-    # Preserve top-level keys from existing file (report name, canvas, etc.)
-    # but always refresh the source path and pages list.
+    _MANAGED_KEYS = {"report", "canvas", "pages"}
     layout: dict[str, Any] = {
+        **{k: v for k, v in existing_top.items() if k not in _MANAGED_KEYS},
         "report": existing_top.get("report", {"name": report.name}) | {"source": source_rel},
         "canvas": existing_top.get("canvas", {
             "width": report.pages[0].width if report.pages else 1280,
             "height": report.pages[0].height if report.pages else 720,
-            "gutter": 0,
+            "gutter": 4,
         }),
         "pages": pages_data,
     }
 
+    validate_layout(layout)
+    output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
         yaml.dump(layout, allow_unicode=True, sort_keys=False, default_flow_style=False),
         encoding="utf-8",
     )
     return output
+
+
+def _load_existing(merge_with: Path | None) -> tuple[dict[str, Any], dict[str, dict]]:
+    """Load an existing layout YAML for merging; returns (top_level_dict, pages_by_id)."""
+    if not merge_with or not merge_with.exists():
+        return {}, {}
+    top = yaml.safe_load(merge_with.read_text(encoding="utf-8")) or {}
+    pages = {page["id"]: page for page in top.get("pages", [])}
+    return top, pages
+
+
+def _merge_page(page, existing: dict[str, Any]) -> dict[str, Any]:
+    """Return the existing page config, appending rows for any newly-added visuals."""
+    referenced: set[str] = {
+        col["name"]
+        for row in existing.get("rows", [])
+        for col in row.get("cols", [])
+        if col.get("name")
+    }
+    new_visuals = [v for v in page.visuals if v.name not in referenced]
+    if not new_visuals:
+        return existing
+
+    new_rows = _infer_page_rows(new_visuals, page.width, page.height)
+    existing_row_ids = {r["id"] for r in existing.get("rows", [])}
+    for row in new_rows:
+        base, n = row["id"], 0
+        while row["id"] in existing_row_ids:
+            n += 1
+            row["id"] = f"{base}_{n}"
+        existing_row_ids.add(row["id"])
+
+    merged = dict(existing)
+    merged["rows"] = existing.get("rows", []) + new_rows
+    return merged

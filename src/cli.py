@@ -6,6 +6,7 @@ from .grid.schema import LayoutSpec
 from .grid.engine import build
 from .grid.renderer import render
 from .grid.extractor import extract
+from .grid.scaffold import scaffold
 
 
 def _cmd_generate(args: argparse.Namespace) -> None:
@@ -51,7 +52,7 @@ def main() -> None:
                      help="Path to the layout YAML file.")
     gen.add_argument("--output", default=None, metavar="DIR",
                      help="Output directory (default: same directory as the layout file).")
-    gen.add_argument("--debug", action="store_true",
+    gen.add_argument("--debug-grid", action="store_true", dest="debug",
                      help="Overlay semi-transparent grid cell outlines on every page.")
 
     ext = sub.add_parser("extract", help="Extract a layout YAML from an existing .Report folder.")
@@ -64,12 +65,18 @@ def main() -> None:
                           "preserved verbatim (component/menu configs kept); only new pages "
                           "are extracted from the report.")
 
+    scf = sub.add_parser("scaffold", help="Interactively add a component to a layout YAML.")
+    scf.add_argument("--layout", required=True, metavar="FILE",
+                     help="Path to the layout YAML file to modify.")
+
     args = parser.parse_args()
 
     if args.command == "generate":
         _cmd_generate(args)
     elif args.command == "extract":
         _cmd_extract(args)
+    elif args.command == "scaffold":
+        scaffold(Path(args.layout))
 
 
 if __name__ == "__main__":

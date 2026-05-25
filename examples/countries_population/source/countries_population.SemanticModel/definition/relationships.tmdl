@@ -1,0 +1,8 @@
+relationship AutoDetected_20061703-e65f-41c7-b549-d3f7b13b0258
+	fromColumn: fact_population.geo_id
+	toColumn: dim_geolocation.geo_id
+
+relationship AutoDetected_495a4b03-5ac8-411b-814a-dc9e83579928
+	fromColumn: fact_population.time_id
+	toColumn: dim_time.time_id
+

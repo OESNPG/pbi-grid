@@ -1,0 +1,55 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "90aa22cd0d317e6e552a",
+  "position": {
+    "height": 40.0,
+    "tabOrder": 1005,
+    "width": 120.0,
+    "x": 10.0,
+    "y": 12.0,
+    "z": 1005
+  },
+  "visual": {
+    "drillFilterOtherVisuals": true,
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Power BI'"
+                }
+              }
+            },
+            "imageUrl": {
+              "expr": {
+                "ResourcePackageItem": {
+                  "ItemName": "powerbi_header.png",
+                  "PackageName": "RegisteredResources",
+                  "PackageType": 1
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualType": "image"
+  }
+}

@@ -21,3 +21,18 @@ def theme_dir(package: str | None) -> Path | None:
         return None
     d = _THEMES_ROOT / package
     return d if d.is_dir() else None
+
+
+def load_palette(package: str | None) -> dict:
+    """Return the palette sub-dict from tokens, or {}."""
+    return load_tokens(package).get("palette", {})
+
+
+def load_visual_defaults(package: str | None) -> dict:
+    """Return visual_defaults.yaml content for the given package, or {}."""
+    if not package:
+        return {}
+    path = _THEMES_ROOT / package / "visual_defaults.yaml"
+    if not path.exists():
+        return {}
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
