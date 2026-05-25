@@ -1,8 +1,10 @@
 # pbi-grid
 
-A declarative layout engine for Power BI reports in PBIR format.
+A Dashboard-as-Code (DaC) tool that compiles declarative YAML layouts into Power BI PBIR reports using a deterministic 12-column grid layout engine.
 
-Define report layouts in YAML using a 12-column grid and generate a complete `.Report` folder automatically. Visual positions are computed from row heights and column spans — no manual coordinate editing.
+Define report layouts in YAML using rows and a 12-column grid, and generate a complete `.Report` folder automatically. Visual positions are computed from row heights and column spans with no manual coordinate editing required.
+
+It also includes an extensible design-token-based theming system, including a reference govBR design package.
 
 ---
 
