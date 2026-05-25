@@ -51,9 +51,9 @@ The example below uses the included `examples/countries_population` report. The 
 
 ### 1 — Extract a layout from an existing report
 
-```bash
-pbi-grid extract \
-  --report examples/countries_population/source/countries_population.Report \
+```powershell
+pbi-grid extract `
+  --report examples/countries_population/source/countries_population.Report `
   --output output/layout/layout.yaml
 ```
 
@@ -68,7 +68,7 @@ Each visual is identified by its 20-char PBIR name and becomes a `name:` col in 
 
 ### 2 — Add components with scaffold
 
-```bash
+```powershell
 pbi-grid scaffold --layout output/layout/layout.yaml
 ```
 
@@ -82,10 +82,10 @@ See the [Scaffold reference](#scaffold) below for full details.
 
 ### 3 — Debug the grid layout
 
-```bash
-pbi-grid generate \
-  --layout output/layout/layout.yaml \
-  --output output/countries_population \
+```powershell
+pbi-grid generate `
+  --layout output/layout/layout.yaml `
+  --output output/countries_population `
   --debug-grid
 ```
 
@@ -93,9 +93,9 @@ Renders a visual debug layer on every page: each grid cell gets a semi-transpare
 
 ### 4 — Generate the final report
 
-```bash
-pbi-grid generate \
-  --layout output/layout/layout.yaml \
+```powershell
+pbi-grid generate `
+  --layout output/layout/layout.yaml `
   --output output/countries_population
 ```
 
@@ -103,9 +103,9 @@ Produces a `.Report` folder ready to open in Power BI Desktop. When `report.sour
 
 ### 5 — Merge extract (add new visuals without losing edits)
 
-```bash
-pbi-grid extract \
-  --report examples/countries_population/source/countries_population.Report \
+```powershell
+pbi-grid extract `
+  --report examples/countries_population/source/countries_population.Report `
   --merge output/layout/layout.yaml
 ```
 
@@ -480,7 +480,7 @@ pbi-grid/
 
 ### Running tests
 
-```bash
+```powershell
 # Install dev dependencies
 pip install -e ".[dev]"
 
