@@ -19,6 +19,8 @@ visuals:
     border: true
   slicer:
     border: true
+  shapeMap:
+    border: true
 
 components:
   header:
