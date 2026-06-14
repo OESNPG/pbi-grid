@@ -31,7 +31,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#1351B4'"
+                      "Value": "'#F0F0F0'"
                     }
                   }
                 }
@@ -56,7 +56,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0C326F'"
+                      "Value": "'#EEEEEE'"
                     }
                   }
                 }
@@ -159,7 +159,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#333333'"
+                      "Value": "'#636363'"
                     }
                   }
                 }
@@ -168,7 +168,7 @@
             "fontFamily": {
               "expr": {
                 "Literal": {
-                  "Value": "'''Segoe UI Bold'', wf_segoe-ui_bold, helvetica, arial, sans-serif'"
+                  "Value": "'Rawline, ''Segoe UI'', helvetica, arial, sans-serif'"
                 }
               }
             },
@@ -219,7 +219,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#333333'"
+                      "Value": "'#1351B4'"
                     }
                   }
                 }
@@ -237,7 +237,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#FFFFFF'"
+                      "Value": "'#1351B4'"
                     }
                   }
                 }
@@ -299,7 +299,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#0C326F'"
+                      "Value": "'#EEEEEE'"
                     }
                   }
                 }

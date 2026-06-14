@@ -20,8 +20,12 @@ class Visual:
     def to_dict(self) -> dict:
         if self.raw_data is not None:
             # Preserve all existing visual data; only update position.
+            # Strip parentGroupName: the visual is placed independently by the grid
+            # engine, so a reference to a source group absent from the output would
+            # prevent Power BI from rendering the visual.
             result = dict(self.raw_data)
             result["position"] = self.position.to_dict()
+            result.pop("parentGroupName", None)
             return result
         d: dict = {
             "$schema": _SCHEMA,

@@ -188,13 +188,25 @@ def extract(
         Only pages found in the report but *missing* from the existing YAML are
         extracted and appended. The page order follows the report's page order.
     """
+    import os
+
     report = Report.from_pbir(report_path)
 
-    existing_top, existing_pages = _load_existing(merge_with)
+    # Round-trip merge: preserve the user's comments/formatting in the existing
+    # YAML. PyYAML drops comments on load, so we use ruamel only when merging.
+    round_trip = bool(merge_with and merge_with.exists())
+    if round_trip:
+        ryaml = _ruamel()
+        top = ryaml.load(merge_with.read_text(encoding="utf-8")) or {}
+    else:
+        ryaml = None
+        top = {}
+    existing_pages = {page["id"]: page for page in top.get("pages", [])}
 
-    pages_data: list[dict[str, Any]] = []
+    pages_data: list[Any] = []
     for page in report.pages:
         if page.name in existing_pages:
+            # mutate the existing (commented) page object in place — keeps comments
             pages_data.append(_merge_page(page, existing_pages[page.name]))
         else:
             rows = _infer_page_rows(page.visuals, page.width, page.height)
@@ -207,47 +219,66 @@ def extract(
     if output is None:
         output = merge_with if merge_with else report_path.parent / f"{report.name}_layout.yaml"
 
-    import os
     source_rel = os.path.relpath(report_path.resolve(), output.parent.resolve())
 
-    _MANAGED_KEYS = {"report", "canvas", "pages"}
-    layout: dict[str, Any] = {
-        **{k: v for k, v in existing_top.items() if k not in _MANAGED_KEYS},
-        "report": existing_top.get("report", {"name": report.name}) | {"source": source_rel},
-        "canvas": existing_top.get("canvas", {
+    # Update the managed keys in place so non-managed top-level keys (and their
+    # comments) survive untouched.
+    report_block = top.get("report")
+    if report_block is None:
+        report_block = {"name": report.name}
+        top["report"] = report_block
+    report_block["source"] = source_rel
+    if "canvas" not in top:
+        top["canvas"] = {
             "width": report.pages[0].width if report.pages else 1280,
             "height": report.pages[0].height if report.pages else 720,
             "gutter": 4,
-        }),
-        "pages": pages_data,
-    }
+        }
+    top["pages"] = pages_data
 
-    validate_layout(layout)
+    validate_layout(top)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(
-        yaml.dump(layout, allow_unicode=True, sort_keys=False, default_flow_style=False),
-        encoding="utf-8",
-    )
+    if round_trip:
+        from io import StringIO
+        buf = StringIO()
+        ryaml.dump(top, buf)
+        output.write_text(buf.getvalue(), encoding="utf-8")
+    else:
+        output.write_text(
+            yaml.dump(top, allow_unicode=True, sort_keys=False, default_flow_style=False),
+            encoding="utf-8",
+        )
     return output
 
 
-def _load_existing(merge_with: Path | None) -> tuple[dict[str, Any], dict[str, dict]]:
-    """Load an existing layout YAML for merging; returns (top_level_dict, pages_by_id)."""
-    if not merge_with or not merge_with.exists():
-        return {}, {}
-    top = yaml.safe_load(merge_with.read_text(encoding="utf-8")) or {}
-    pages = {page["id"]: page for page in top.get("pages", [])}
-    return top, pages
+def _ruamel():
+    """A ruamel YAML configured to match the project's dash-at-parent list style."""
+    from ruamel.yaml import YAML
+    y = YAML()
+    y.preserve_quotes = True
+    y.width = 4096                              # avoid line wrapping of long strings
+    y.indent(mapping=2, sequence=2, offset=0)   # `key:` then `- item` at same indent
+    return y
 
 
 def _merge_page(page, existing: dict[str, Any]) -> dict[str, Any]:
-    """Return the existing page config, appending rows for any newly-added visuals."""
-    referenced: set[str] = {
-        col["name"]
-        for row in existing.get("rows", [])
-        for col in row.get("cols", [])
-        if col.get("name")
-    }
+    """Append rows for newly-added visuals, mutating *existing* in place.
+
+    Mutating in place (rather than rebuilding the dict) preserves comments when
+    *existing* is a ruamel ``CommentedMap``.
+
+    A visual is "already referenced" if it appears either as a column ``name`` or
+    inside any column's ``overlay`` list — otherwise an overlaid visual (e.g. a
+    total card over a donut) would be re-added as a standalone col on every merge.
+    """
+    referenced: set[str] = set()
+    for row in existing.get("rows", []):
+        for col in row.get("cols", []):
+            if col.get("name"):
+                referenced.add(col["name"])
+            for ov in col.get("overlay") or []:
+                if ov.get("name"):
+                    referenced.add(ov["name"])
     new_visuals = [v for v in page.visuals if v.name not in referenced]
     if not new_visuals:
         return existing
@@ -261,6 +292,9 @@ def _merge_page(page, existing: dict[str, Any]) -> dict[str, Any]:
             row["id"] = f"{base}_{n}"
         existing_row_ids.add(row["id"])
 
-    merged = dict(existing)
-    merged["rows"] = existing.get("rows", []) + new_rows
-    return merged
+    rows = existing.get("rows")
+    if rows is None:
+        existing["rows"] = new_rows
+    else:
+        rows.extend(new_rows)
+    return existing

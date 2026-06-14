@@ -1,7 +1,8 @@
 import pytest
 
 from src.grid.engine import _find_next_x, _rowspan_height, _build_page, _apply_shared
-from src.grid.schema import Canvas, ColSpec, RowSpec, PageSpec, SharedRowSpec
+from src.grid.schema import Canvas, ColSpec, RowSpec, PageSpec, SharedRowSpec, OverlaySpec, ColConfig, InfoSpec
+from src.models import Visual, Position
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -286,3 +287,233 @@ class TestApplyShared:
         page = _page([_row("r0", 100, [_col(12)])])
         result = _apply_shared(page, [])
         assert result is page
+
+
+# ── Canvas por página ─────────────────────────────────────────────────────────
+class TestPerPageCanvas:
+    def test_apply_shared_preserves_canvas(self):
+        own = Canvas(width=1600, height=2000, gutter=0)
+        page = PageSpec(id="p", display_name="p",
+                        rows=[_row("r0", 100, [_col(12)])], canvas=own)
+        shared = SharedRowSpec(id="nav", cols=[_col(12)], height=60)
+        result = _apply_shared(page, [shared])
+        assert result.canvas is own
+
+    def test_build_uses_per_page_canvas(self):
+        from src.grid.engine import build
+        from src.grid.schema import LayoutSpec
+
+        def mkpage(pid, name, canvas=None):
+            return PageSpec(
+                id=pid, display_name=name,
+                rows=[_row("r0", 100, [_col(12, visual="textbox")])],
+                canvas=canvas,
+            )
+
+        layout = LayoutSpec(
+            report_name="R", package=None,
+            canvas=Canvas(width=1280, height=720, gutter=0),
+            pages=[
+                mkpage("a" * 20, "Global"),
+                mkpage("b" * 20, "Propria", Canvas(width=1600, height=2000, gutter=0)),
+            ],
+        )
+        report = build(layout)
+        pages = {p.display_name: p for p in report.pages}
+
+        # página sem canvas próprio usa o global
+        assert pages["Global"].width == 1280
+        assert pytest.approx(pages["Global"].visuals[0].position.width, abs=0.01) == 1280
+
+        # página com canvas próprio usa as suas dimensões
+        assert pages["Propria"].width == 1600
+        assert pages["Propria"].height == 2000
+        assert pytest.approx(pages["Propria"].visuals[0].position.width, abs=0.01) == 1600
+
+
+# ── Normalização de fonte de textbox ──────────────────────────────────────────
+def _textbox_source(name: str, fonts: list) -> Visual:
+    """Textbox de source com um textRun por fonte informada (None = sem override)."""
+    runs = []
+    for f in fonts:
+        run = {"value": "x"}
+        if f is not None:
+            run["textStyle"] = {"fontFamily": f}
+        runs.append(run)
+    raw = {
+        "name": name,
+        "position": {"x": 0, "y": 0, "z": 0, "width": 10, "height": 10},
+        "visual": {
+            "visualType": "textbox",
+            "objects": {"general": [{"properties": {"paragraphs": [{"textRuns": runs}]}}]},
+        },
+    }
+    return Visual(name=name, visual_type="textbox",
+                  position=Position(x=0, y=0, z=0, width=10, height=10, tab_order=0),
+                  raw_data=raw)
+
+
+def _runs_fonts(visual: Visual) -> list:
+    out = []
+    for g in visual.raw_data["visual"]["objects"]["general"]:
+        for p in g["properties"]["paragraphs"]:
+            for r in p["textRuns"]:
+                out.append(r.get("textStyle", {}).get("fontFamily"))
+    return out
+
+
+class TestTextboxFontNormalization:
+    _CANVAS = Canvas(width=1280, height=720, gutter=0)
+    _TOKENS = {"typography": {"text_font": "Trebuchet MS"}}
+
+    def test_forca_fonte_em_todos_os_runs(self):
+        # título com fonte explícita "errada" + subtítulo sem override
+        src = _textbox_source("tb1", ["Segoe (Bold)", None])
+        page = _page([_row("r0", 100, [_col(12, name="tb1")])])
+        result = _build_page(page, self._CANVAS, _pmap(page),
+                             source_visuals={"tb1": src}, tokens=self._TOKENS)
+        assert _runs_fonts(result.visuals[0]) == ["Trebuchet MS", "Trebuchet MS"]
+
+    def test_nao_muta_o_source(self):
+        src = _textbox_source("tb1", ["Segoe (Bold)"])
+        page = _page([_row("r0", 100, [_col(12, name="tb1")])])
+        _build_page(page, self._CANVAS, _pmap(page),
+                    source_visuals={"tb1": src}, tokens=self._TOKENS)
+        # o raw_data do source permanece intacto (deep copy no engine)
+        assert _runs_fonts(src) == ["Segoe (Bold)"]
+
+    def test_sem_token_nao_altera(self):
+        src = _textbox_source("tb1", ["Segoe (Bold)"])
+        page = _page([_row("r0", 100, [_col(12, name="tb1")])])
+        result = _build_page(page, self._CANVAS, _pmap(page),
+                             source_visuals={"tb1": src}, tokens={})
+        assert _runs_fonts(result.visuals[0]) == ["Segoe (Bold)"]
+
+
+# ── Overlay (card sobre donut) ─────────────────────────────────────────────────
+class TestOverlay:
+    _CANVAS = Canvas(width=1280, height=720, gutter=0)
+
+    def test_overlay_centralizado_e_acima(self):
+        # célula cheia 1280x100; overlay 90x50 centralizado
+        col = _col(12, visual="donutChart",
+                   overlay=[OverlaySpec(visual="card", width=90, height=50)])
+        page = _page([_row("r0", 100, [col])])
+        result = _build_page(page, self._CANVAS, _pmap(page))
+        donut, card = result.visuals[0], result.visuals[1]
+        assert donut.visual_type == "donutChart"
+        assert card.visual_type == "card"
+        assert pytest.approx(card.position.x, abs=0.01) == (1280 - 90) / 2
+        assert pytest.approx(card.position.y, abs=0.01) == (100 - 50) / 2
+        assert pytest.approx(card.position.width, abs=0.01) == 90
+        assert pytest.approx(card.position.height, abs=0.01) == 50
+        # overlay precisa ficar ACIMA da célula-pai (z maior)
+        assert card.position.z > donut.position.z
+
+    def test_overlay_align_right_valign_bottom(self):
+        col = _col(12, visual="donutChart",
+                   overlay=[OverlaySpec(visual="card", width=100, height=40,
+                                        align="right", valign="bottom")])
+        page = _page([_row("r0", 100, [col])])
+        result = _build_page(page, self._CANVAS, _pmap(page))
+        card = result.visuals[1]
+        assert pytest.approx(card.position.x, abs=0.01) == 1280 - 100
+        assert pytest.approx(card.position.y, abs=0.01) == 100 - 40
+
+    def test_overlay_referencia_visual_do_source(self):
+        src = Visual(name="card1", visual_type="cardVisual",
+                     position=Position(x=0, y=0, z=0, width=1, height=1, tab_order=0),
+                     raw_data={"name": "card1", "visual": {"visualType": "cardVisual"}})
+        col = _col(6, name="donutX",
+                   overlay=[OverlaySpec(name="card1", width=80, height=40)])
+        page = _page([_row("r0", 100, [col])])
+        result = _build_page(page, self._CANVAS, _pmap(page),
+                             source_visuals={"card1": src})
+        card = result.visuals[-1]
+        assert card.name == "card1"
+        assert card.visual_type == "cardVisual"
+        assert card.raw_data is not None
+
+    def test_sem_overlay_nao_adiciona_visual(self):
+        page = _page([_row("r0", 100, [_col(12, visual="donutChart")])])
+        result = _build_page(page, self._CANVAS, _pmap(page))
+        assert len(result.visuals) == 1
+
+
+# -- Title injection (config.title) --------------------------------------------
+def _title_lit(visual_raw):
+    return visual_raw["visual"]["visualContainerObjects"]["title"][0]["properties"]["text"]["expr"]["Literal"]["Value"]
+
+
+class TestTitleInjection:
+    _CANVAS = Canvas(width=1280, height=720, gutter=0)
+
+    def _src(self, name="c"):
+        return Visual(name=name, visual_type="barChart",
+                      position=Position(x=0, y=0, z=0, width=1, height=1, tab_order=0),
+                      raw_data={"name": name, "visual": {"visualType": "barChart"}})
+
+    def test_title_injeta_no_visual_do_source(self):
+        col = _col(12, name="c", config=ColConfig(title="Atuacao nos temas"))
+        page = _page([_row("r0", 100, [col])])
+        result = _build_page(page, self._CANVAS, _pmap(page), source_visuals={"c": self._src()})
+        assert _title_lit(result.visuals[0].raw_data) == "'Atuacao nos temas'"
+
+    def test_title_escapa_aspas_simples(self):
+        col = _col(12, name="c", config=ColConfig(title="Total de PPG's mapeados"))
+        page = _page([_row("r0", 100, [col])])
+        result = _build_page(page, self._CANVAS, _pmap(page), source_visuals={"c": self._src()})
+        assert _title_lit(result.visuals[0].raw_data) == "'Total de PPG''s mapeados'"
+
+    def test_title_preserva_alignment_existente(self):
+        src = self._src()
+        src.raw_data["visual"]["visualContainerObjects"] = {
+            "title": [{"properties": {"alignment": {"expr": {"Literal": {"Value": "'center'"}}}}}]
+        }
+        col = _col(12, name="c", config=ColConfig(title="Novo titulo"))
+        page = _page([_row("r0", 100, [col])])
+        result = _build_page(page, self._CANVAS, _pmap(page), source_visuals={"c": src})
+        props = result.visuals[0].raw_data["visual"]["visualContainerObjects"]["title"][0]["properties"]
+        assert props["text"]["expr"]["Literal"]["Value"] == "'Novo titulo'"
+        assert props["alignment"]["expr"]["Literal"]["Value"] == "'center'"
+
+    def test_sem_config_nao_injeta(self):
+        page = _page([_row("r0", 100, [_col(12, name="c")])])
+        result = _build_page(page, self._CANVAS, _pmap(page), source_visuals={"c": self._src()})
+        assert "visualContainerObjects" not in result.visuals[0].raw_data["visual"]
+        assert all(v.visual_type != "textbox" for v in result.visuals)
+
+    def test_config_sem_title_nao_injeta(self):
+        col = _col(12, name="c", config=ColConfig(info=InfoSpec(description="<b>html</b>")))
+        page = _page([_row("r0", 100, [col])])
+        result = _build_page(page, self._CANVAS, _pmap(page), source_visuals={"c": self._src()})
+        assert "visualContainerObjects" not in result.visuals[0].raw_data["visual"]
+
+    def test_title_em_visual_bare(self):
+        col = _col(12, visual="barChart", config=ColConfig(title="Bare"))
+        page = _page([_row("r0", 100, [col])])
+        result = _build_page(page, self._CANVAS, _pmap(page))
+        vco = result.visuals[0].config["visualContainerObjects"]
+        assert vco["title"][0]["properties"]["text"]["expr"]["Literal"]["Value"] == "'Bare'"
+
+
+    def test_overlay_offset_empurra_para_baixo(self):
+        # centralizado + offset_y desce o card (título/legenda no topo do donut)
+        col = _col(12, visual="donutChart",
+                   overlay=[OverlaySpec(visual="card", width=90, height=50, offset_y=18)])
+        page = _page([_row("r0", 100, [col])])
+        result = _build_page(page, self._CANVAS, _pmap(page))
+        card = result.visuals[1]
+        assert pytest.approx(card.position.y, abs=0.01) == (100 - 50) / 2 + 18
+        # x permanece centralizado (offset_x default 0)
+        assert pytest.approx(card.position.x, abs=0.01) == (1280 - 90) / 2
+
+    def test_overlay_offset_negativo(self):
+        col = _col(12, visual="donutChart",
+                   overlay=[OverlaySpec(visual="card", width=90, height=50,
+                                        offset_x=-10, offset_y=-5)])
+        page = _page([_row("r0", 100, [col])])
+        result = _build_page(page, self._CANVAS, _pmap(page))
+        card = result.visuals[1]
+        assert pytest.approx(card.position.x, abs=0.01) == (1280 - 90) / 2 - 10
+        assert pytest.approx(card.position.y, abs=0.01) == (100 - 50) / 2 - 5

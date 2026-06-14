@@ -35,12 +35,14 @@ menu:
   header:
     font_color: "#071D41"              # blue-warm-vivid-90 — dark, no fill (transparent header)
   item:
-    font_color_default: "#333333"
-    font_color_hover: "#333333"
-    font_color_selected: "#FFFFFF"     # white on dark background
+    font_family: "Rawline, 'Segoe UI', helvetica, arial, sans-serif"  # govbr primary font
+    font_color_default: "#636363"      # neutral gray — pageNavigator default style
+    font_color_hover: "#1351B4"        # --interactive — blue on hover
+    font_color_selected: "#1351B4"     # --interactive — blue on selected
     fill_color_default: "#F8F8F8"      # --gray-2 — submenu background for child items
-    fill_color_hover: "#1351B4"        # --interactive at 84% transparent (16% opacity)
-    fill_color_selected: "#0C326F"     # --active (blue-warm-vivid-80) — darker selected state
+    fill_color_hover: "#F0F0F0"        # light gray hover — pageNavigator style
+    fill_color_selected: "#EEEEEE"     # light gray selected — pageNavigator style
+    accent_color: "#1351B4"            # --interactive — outline on selected tab
     outline_color: "#1351B4"
 
 layout:

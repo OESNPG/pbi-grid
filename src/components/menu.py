@@ -71,6 +71,22 @@ class MenuComponent(TokenMixin, Component):
             d = d[key]
         return hex_color(d) if isinstance(d, str) else theme_color(fallback_id, fallback_percent)
 
+    def _font_size(self) -> int:
+        """Return font size from token, defaulting to 14 for horizontal and 10 for vertical."""
+        v = self._token_int("menu", "item", "font_size", default=0)
+        return v if v > 0 else (14 if self.orientation == "horizontal" else 10)
+
+    def _font_family_literal(self) -> str:
+        """Return the DAX literal string for the button font family.
+
+        Token value is a plain CSS font-family string; single quotes are escaped
+        for the DAX literal format (e.g. 'Rawline, ''Segoe UI'', sans-serif').
+        """
+        v = self._token_str("menu", "item", "font_family")
+        if v:
+            return "'" + v.replace("'", "''") + "'"
+        return "'''Segoe UI Bold'', wf_segoe-ui_bold, helvetica, arial, sans-serif'"
+
     # ------------------------------------------------------------------
     # Slot height layout
     # ------------------------------------------------------------------
@@ -319,6 +335,14 @@ class MenuComponent(TokenMixin, Component):
 
     def _button_fill(self, is_child: bool) -> list[dict]:
         """Build the fill state array for default / hover / selected states."""
+        if self.orientation == "horizontal":
+            hover_fill = self._color("menu", "item", "fill_color_hover", fallback_id=3, fallback_percent=0.4)
+            sel_fill = self._color("menu", "item", "fill_color_selected", fallback_id=3)
+            return [
+                {"properties": {"show": literal("false")}},
+                {"properties": {"show": literal("true"), "fillColor": hover_fill}, "selector": {"id": "hover"}},
+                {"properties": {"show": literal("true"), "fillColor": sel_fill}, "selector": {"id": "selected"}},
+            ]
         default_fill = self._token_str("menu", "item", "fill_color_default") if is_child else None
         base = (
             [{"properties": {
@@ -350,7 +374,10 @@ class MenuComponent(TokenMixin, Component):
     ) -> Visual:
         """Page-navigation action button for a leaf menu item."""
         page_id = self.page_id_map.get(item.page, "")
-        left_margin = int(icon_reserved + self._icon_padding()) if icon_reserved > 0 else 7
+        is_horizontal = self.orientation == "horizontal"
+        font_size = self._font_size()
+        h_align = "'center'" if is_horizontal else "'left'"
+        left_margin = 0 if is_horizontal else (int(icon_reserved + self._icon_padding()) if icon_reserved > 0 else 7)
 
         general_props: dict = {"keepLayerOrder": literal("true")}
         if item.description:
@@ -364,6 +391,54 @@ class MenuComponent(TokenMixin, Component):
         if item.description:
             visual_link_props["tooltip"] = literal(f"'{item.description}'")
 
+        if is_horizontal:
+            font_color_default = self._color("menu", "item", "font_color_default", fallback_id=3, fallback_percent=0.2)
+            font_color_hover = self._color("menu", "item", "font_color_hover", fallback_id=3, fallback_percent=0.4)
+            font_color_selected = self._color("menu", "item", "font_color_selected", fallback_id=3)
+            accent_color = self._color("menu", "item", "accent_color", fallback_id=3)
+            drop_shadow = [{"properties": {"show": literal("false")}}]
+            outline = [
+                {"properties": {"show": literal("false")}},
+                {"properties": {
+                    "show": literal("true"),
+                    "lineColor": accent_color,
+                    "weight": literal("3D"),
+                }, "selector": {"id": "selected"}},
+            ]
+        else:
+            font_color_default = self._color("menu", "item", "font_color_default", fallback_id=3, fallback_percent=0.2)
+            font_color_hover = self._color("menu", "item", "font_color_hover", fallback_id=3, fallback_percent=0.4)
+            font_color_selected = self._color("menu", "item", "font_color_selected", fallback_id=3)
+            drop_shadow = [{"properties": {
+                "show": literal("false"),
+                "preset": literal("'Custom'"),
+                "position": literal("'Inner'"),
+                "color": self._color("menu", "item", "fill_color_selected", fallback_id=3),
+                "transparency": literal("0D"),
+                "shadowSpread": literal("0D"),
+                "shadowBlur": literal("0D"),
+                "angle": literal("90D"),
+                "shadowDistance": literal("3D"),
+            }}]
+            outline = [
+                {"properties": {"show": literal("false")}},
+                {"properties": {
+                    "lineColor": self._color("menu", "item", "outline_color", fallback_id=8),
+                    "weight": literal("5D"),
+                }, "selector": {"id": "default"}},
+            ]
+
+        text_props: dict = {
+            "text": literal(f"'{item.page}'"),
+            "fontColor": font_color_default,
+            "verticalAlignment": literal("'middle'"),
+            "horizontalAlignment": literal(h_align),
+            "fontSize": literal(f"{font_size}D"),
+            "fontFamily": literal(self._font_family_literal()),
+        }
+        if left_margin > 0:
+            text_props["leftMargin"] = literal(f"{left_margin}L")
+
         return Visual(
             name=make_id(f"menu-{item.page}-{cell.z}-{index}"),
             visual_type="actionButton",
@@ -374,47 +449,17 @@ class MenuComponent(TokenMixin, Component):
                         {"properties": {"shapeType": literal("'blank'")}, "selector": {"id": "default"}},
                         {"properties": {"show": literal("false")}},
                     ],
-                    "outline": [
-                        {"properties": {"show": literal("false")}},
-                        {"properties": {
-                            "lineColor": self._color("menu", "item", "outline_color", fallback_id=8),
-                            "weight": literal("5D"),
-                        }, "selector": {"id": "default"}},
-                    ],
+                    "outline": outline,
                     "text": [
                         {"properties": {"show": literal("true")}},
-                        {"properties": {
-                            "text": literal(f"'{item.page}'"),
-                            "fontColor": self._color("menu", "item", "font_color_default", fallback_id=3, fallback_percent=0.2),
-                            "verticalAlignment": literal("'middle'"),
-                            "horizontalAlignment": literal("'left'"),
-                            "fontSize": literal("10D"),
-                            "fontFamily": literal(
-                                "'''Segoe UI Bold'', wf_segoe-ui_bold, helvetica, arial, sans-serif'"
-                            ),
-                            "leftMargin": literal(f"{left_margin}L"),
-                        }, "selector": {"id": "default"}},
-                        {"properties": {
-                            "fontColor": self._color("menu", "item", "font_color_hover", fallback_id=3, fallback_percent=0.4),
-                        }, "selector": {"id": "hover"}},
-                        {"properties": {
-                            "fontColor": self._color("menu", "item", "font_color_selected", fallback_id=3),
-                        }, "selector": {"id": "selected"}},
+                        {"properties": text_props, "selector": {"id": "default"}},
+                        {"properties": {"fontColor": font_color_hover}, "selector": {"id": "hover"}},
+                        {"properties": {"fontColor": font_color_selected}, "selector": {"id": "selected"}},
                     ],
                     "fill": self._button_fill(is_child),
                 },
                 "visualContainerObjects": {
-                    "dropShadow": [{"properties": {
-                        "show": literal("false"),
-                        "preset": literal("'Custom'"),
-                        "position": literal("'Inner'"),
-                        "color": self._color("menu", "item", "fill_color_selected", fallback_id=3),
-                        "transparency": literal("0D"),
-                        "shadowSpread": literal("0D"),
-                        "shadowBlur": literal("0D"),
-                        "angle": literal("90D"),
-                        "shadowDistance": literal("3D"),
-                    }}],
+                    "dropShadow": drop_shadow,
                     "title": [{"properties": {
                         "text": literal(f"'{item.page}'"),
                         "titleWrap": literal("true"),

@@ -149,9 +149,17 @@ pages:
   - id: <pbir-page-id>   # 20-char hex PBIR page ID
     display_name: Home
     rows: [...]
+  - id: <other-page-id>
+    display_name: Detalhe
+    canvas:               # optional — per-page canvas; omitted fields inherit the global canvas
+      width: 1600
+      height: 2000
+    rows: [...]
 ```
 
 **Page IDs** must be stable 20-char hex strings — use the existing PBIR folder name from `extract`, or any deterministic hex string for new pages.
+
+**Per-page canvas** — a page may declare its own `canvas:` block to override the global `width`/`height`/`gutter`. Any field omitted in the page-level block inherits the global canvas value. Pages without a `canvas:` block use the global canvas.
 
 ### Rows and columns
 
@@ -181,6 +189,55 @@ rows:
 |---|---|
 | `name` | Reposition an existing visual from the source report by PBIR ID. |
 | `visual` | Create a new bare visual of the given Power BI type. |
+
+**`overlay`** — stack visuals on top of a cell (higher z), aligned within it. Power BI
+has no native "total in the donut hole", so place a discreet card over the donut:
+
+```yaml
+      - span: 6
+        name: <donut PBIR ID>
+        overlay:
+          - name: <total card PBIR ID>  # or `visual: card` for a new bare card
+            width: 110      # px (optional; defaults to the full cell width)
+            height: 60      # px (optional; defaults to the full cell height)
+            align: center   # left | center | right  (default: center)
+            valign: center  # top  | center | bottom (default: center)
+            offset_x: 0     # px nudge after alignment (optional, can be negative)
+            offset_y: 18    # px nudge — e.g. push the card below a donut's title/legend
+```
+
+`offset_x`/`offset_y` shift the overlay after alignment. Use `offset_y` when a donut's
+title and legend occupy the top, so the visual hole sits below the cell's centre.
+
+Each overlay is rendered after its parent at a higher z, so it always sits on top.
+Multiple overlays per cell are allowed.
+
+**`config`** — attach a per-visual config **YAML file** (presentation + docs), so the
+wording lives in the repo and updates on the next `generate`. The path is relative to
+the layout YAML:
+
+```yaml
+      - span: 6
+        name: <chart/table PBIR ID>
+        config: ./config/visao_geral/titulados.yaml   # read at parse time
+```
+
+Resolution tries the exact path, then `.yaml` / `.yml`. The config file looks like:
+
+```yaml
+title: "Titulados nos temas"   # injected as the visual's header title
+footer: ""                     # caption below the visual (rendering TBD)
+info:                          # documentation, for a help modal (rendering TBD)
+  title: ""
+  description: |               # HTML body
+    <b>...</b>
+  footer: ""
+```
+
+Currently the engine injects `title` into the visual's
+`visualContainerObjects.title` (overriding the source wording while preserving its
+`alignment`); `footer` and `info` are parsed but not yet rendered. Blank fields are
+treated as "not applied". A missing file logs a warning and is skipped.
 
 ### Column span → width (1280 canvas)
 

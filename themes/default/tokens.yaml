@@ -44,6 +44,7 @@ menu:
     fill_color_default: "#F5F5F5"
     fill_color_hover: "#595959"
     fill_color_selected: "#262626"
+    accent_color: "#4472C4"         # outline on selected tab (horizontal orientation)
     outline_color: "#8c8c8c"
 
 layout:

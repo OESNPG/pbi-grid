@@ -1,4 +1,6 @@
-from .schema import LayoutSpec, PageSpec, RowSpec, ColSpec, Canvas, Cell, SharedRowSpec
+import copy
+
+from .schema import LayoutSpec, PageSpec, RowSpec, ColSpec, Canvas, Cell, SharedRowSpec, OverlaySpec
 from ..models import Position, Visual, Page, Report
 from ..pbir_utils import make_id, literal, hex_color
 
@@ -208,7 +210,7 @@ def _apply_shared(page_spec: PageSpec, shared_rows: list[SharedRowSpec]) -> Page
         if pr.id not in shared_ids:
             new_rows.append(pr)
 
-    return PageSpec(id=page_spec.id, display_name=page_spec.display_name, rows=new_rows)
+    return PageSpec(id=page_spec.id, display_name=page_spec.display_name, rows=new_rows, canvas=page_spec.canvas)
 
 
 # ── Column rendering ────────────────────────────────────────────────────────────
@@ -228,7 +230,10 @@ def _render_col(
     theme_dir,
     z: int,
 ) -> list[Visual]:
-    """Translate one ColSpec into its PBIR visuals (component, named, or placeholder)."""
+    """Translate one ColSpec into its PBIR visuals (component, named, or placeholder).
+
+    Any ``col.overlay`` visuals are appended on top of the cell (higher z).
+    """
     from ..components import resolve_component
 
     if col.component:
@@ -246,32 +251,135 @@ def _render_col(
                     z=z - 1,
                     color=div_color,
                 ))
-        return visuals
-
-    if col.name:
+    elif col.name:
         src = source_visuals.get(col.name) if source_visuals else None
-        return [Visual(
+        vtype = src.visual_type if src else (col.visual or "textbox")
+        raw = src.raw_data if src else None
+        if raw is not None and vtype == "textbox":
+            raw = _normalize_textbox_font(raw, tokens)
+        visuals = [Visual(
             name=col.name,
-            visual_type=src.visual_type if src else (col.visual or "textbox"),
+            visual_type=vtype,
             position=Position(
                 x=cell.x, y=cell.y, z=cell.z,
                 width=cell.width, height=cell.height, tab_order=cell.z,
             ),
-            raw_data=src.raw_data if src else None,
+            raw_data=raw,
+        )]
+    else:
+        vid = make_id(f"{page_spec.id}-{row.id}-{col.visual or 'empty'}-{z}")
+        visuals = [Visual(
+            name=vid,
+            visual_type=col.visual or "textbox",
+            position=Position(
+                x=cell.x, y=cell.y, z=cell.z,
+                width=cell.width, height=cell.height, tab_order=cell.z,
+            ),
         )]
 
-    vid = make_id(f"{page_spec.id}-{row.id}-{col.visual or 'empty'}-{z}")
-    return [Visual(
-        name=vid,
-        visual_type=col.visual or "textbox",
-        position=Position(
-            x=cell.x, y=cell.y, z=cell.z,
-            width=cell.width, height=cell.height, tab_order=cell.z,
-        ),
-    )]
+    if col.config and not col.component and visuals:
+        if col.config.title:
+            _apply_title(visuals[0], col.config.title)   # override the visual's header title
+        # info (title/description/footer) → help modal: rendering deferred (see config docs).
+
+    for i, ov in enumerate(col.overlay):
+        visuals.extend(_render_overlay(ov, cell, source_visuals, tokens, cell.z + 500 + i))
+    return visuals
+
+
+def _text_literal(text: str) -> str:
+    """PBIR string literal ('...' with single quotes doubled)."""
+    return "'" + text.replace("'", "''") + "'"
+
+
+def _apply_title(visual: Visual, text: str) -> None:
+    """Override a visual's header title text (visualContainerObjects.title), mutating it.
+
+    Works for source visuals (raw_data) and bare visuals (config). Only the title
+    text is set; visibility/alignment stay under the theme and the source visual,
+    so the generated output is authoritative for the title wording.
+    """
+    lit = {"expr": {"Literal": {"Value": _text_literal(text)}}}
+    if visual.raw_data is not None:
+        raw = copy.deepcopy(visual.raw_data)
+        vco = raw.setdefault("visual", {}).setdefault("visualContainerObjects", {})
+    else:
+        vco = visual.config.setdefault("visualContainerObjects", {})
+        raw = None
+    titles = vco.setdefault("title", [{"properties": {}}])
+    titles[0].setdefault("properties", {})["text"] = lit
+    if raw is not None:
+        visual.raw_data = raw
+
+
+def _overlay_cell(parent: Cell, ov: OverlaySpec, z: int) -> Cell:
+    """Cell for an overlay, sized and aligned within the parent cell."""
+    w = min(ov.width if ov.width is not None else parent.width, parent.width)
+    h = min(ov.height if ov.height is not None else parent.height, parent.height)
+    if ov.align == "center":
+        x = parent.x + (parent.width - w) / 2
+    elif ov.align == "right":
+        x = parent.x + parent.width - w
+    else:
+        x = parent.x
+    if ov.valign == "center":
+        y = parent.y + (parent.height - h) / 2
+    elif ov.valign == "bottom":
+        y = parent.y + parent.height - h
+    else:
+        y = parent.y
+    x += ov.offset_x
+    y += ov.offset_y
+    return Cell(x=round(x, 4), y=round(y, 4), width=round(w, 4), height=round(h, 4), z=z)
+
+
+def _render_overlay(
+    ov: OverlaySpec,
+    parent: Cell,
+    source_visuals: dict[str, Visual] | None,
+    tokens: dict,
+    z: int,
+) -> list[Visual]:
+    """Render one overlay visual placed on top of the parent cell."""
+    cell = _overlay_cell(parent, ov, z)
+    pos = Position(
+        x=cell.x, y=cell.y, z=cell.z,
+        width=cell.width, height=cell.height, tab_order=cell.z,
+    )
+    if ov.name:
+        src = source_visuals.get(ov.name) if source_visuals else None
+        vtype = src.visual_type if src else (ov.visual or "textbox")
+        raw = src.raw_data if src else None
+        if raw is not None and vtype == "textbox":
+            raw = _normalize_textbox_font(raw, tokens)
+        return [Visual(name=ov.name, visual_type=vtype, position=pos, raw_data=raw)]
+    vid = make_id(f"overlay-{ov.visual or 'empty'}-{z}")
+    return [Visual(name=vid, visual_type=ov.visual or "textbox", position=pos)]
 
 
 # ── Page building ───────────────────────────────────────────────────────────────
+
+def _normalize_textbox_font(raw_data: dict, tokens: dict) -> dict:
+    """Force every textRun fontFamily of a textbox to the package font.
+
+    Power BI ignores the theme for free text inside a textbox: each run carries an
+    explicit ``fontFamily`` that overrides the theme, so a re-save in Power BI
+    Desktop can silently revert it. Rewriting the runs here makes the generated
+    output authoritative for the font, regardless of what the source holds.
+
+    Controlled by the ``typography.text_font`` token; if absent, the raw data is
+    returned untouched (backward compatible). The source dict is never mutated.
+    """
+    font = (tokens.get("typography") or {}).get("text_font")
+    if not font:
+        return raw_data
+    raw = copy.deepcopy(raw_data)
+    for gobj in raw.get("visual", {}).get("objects", {}).get("general", []):
+        for para in gobj.get("properties", {}).get("paragraphs", []):
+            for run in para.get("textRuns", []):
+                run.setdefault("textStyle", {})["fontFamily"] = font
+    return raw
+
 
 def _build_page(
     page_spec: PageSpec,
@@ -476,8 +584,9 @@ def build(layout: LayoutSpec, debug: bool = False) -> Report:
 
     for page_spec in layout.pages:
         merged = _apply_shared(page_spec, layout.shared_rows)
+        page_canvas = page_spec.canvas or layout.canvas
         page = _build_page(
-            merged, layout.canvas, page_id_map,
+            merged, page_canvas, page_id_map,
             source_visuals, source_pages, tokens,
             debug=debug, theme_dir=pkg_theme_dir,
         )
