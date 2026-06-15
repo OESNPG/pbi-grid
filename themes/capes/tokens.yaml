@@ -9,6 +9,24 @@
 typography:
   text_font: Trebuchet MS
 
+# Modal de info por componente (gerado pelo pbi-grid): a página-tooltip oculta e o
+# ícone ⓘ que a dispara. Tamanho/posição controlados aqui (sem mexer no código).
+info_modal:        # página-tooltip do modal
+  width: 230          # largura (px) — controla a quebra de linha do texto
+  min_height: 90      # altura mínima (px)
+  content_scale: 1.25 # janela = altura estimada do conteúdo × isto (folga p/ não rolar)
+  header_font: 12     # fonte do título do card (px)
+  body_font: 10       # fonte do corpo/descrição (px)
+  footer_font: 9      # fonte do rodapé (px)
+  padding: 8          # preenchimento interno do card (px)
+info_icon:         # o mini-card ⓘ
+  size: 28              # lado do card (px)
+  font_size: 10         # tamanho do glifo
+  margin: 2             # recuo do canto (gráficos/tabelas)
+  card_margin: 16       # recuo da direita nos cards (KPI)
+  card_v_offset: -8     # deslocamento vertical do centro nos cards (negativo = acima)
+  chart_top_margin: 16  # quanto o ⓘ desce em gráficos/mapas (pelo título)
+
 palette:
   name: capes
   dataColors:

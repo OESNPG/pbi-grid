@@ -405,7 +405,7 @@ def _make_info_icon_card(cell: Cell, name: str, z: int, tokens: dict, vtype: str
     )
 
 
-def _make_tooltip_page(name: str, tokens: dict) -> Page:
+def _make_tooltip_page(name: str, tokens: dict, height: int) -> Page:
     """Hidden tooltip page rendering a component's info modal (HTML Content visual
     bound to ``pbi_grid_config[info_<name>]``)."""
     from .info_table import (
@@ -413,8 +413,8 @@ def _make_tooltip_page(name: str, tokens: dict) -> Page:
     )
 
     cfg = (tokens.get("info_modal", {}) if tokens else {}) or {}
-    w = int(cfg.get("width", 460))
-    h = int(cfg.get("height", 400))
+    w = int(cfg.get("width", 230))
+    h = int(height)
     page_id = info_page_id(name)
     column = info_column(name)
     html_visual = Visual(
@@ -427,6 +427,12 @@ def _make_tooltip_page(name: str, tokens: dict) -> Page:
                 "queryRef": f"{TABLE_NAME}.{column}",
                 "nativeQueryRef": column,
             }]}}},
+            "visualContainerObjects": {
+                "visualHeader": [{"properties": {"show": literal("false")}}],
+                "border": [{"properties": {"show": literal("false")}}],
+                "background": [{"properties": {"show": literal("false")}}],
+                "dropShadow": [{"properties": {"show": literal("false")}}],
+            },
             "drillFilterOtherVisuals": True,
         },
     )
@@ -731,11 +737,11 @@ def build(layout: LayoutSpec, debug: bool = False) -> Report:
         _register_resources(report, layout, tokens, pkg_theme_dir)
 
     from .info_table import collect_info, build_config_tmdl
-    info_items = collect_info(layout)
+    info_items = collect_info(layout, tokens)
     if info_items:
         report.config_table_tmdl = build_config_tmdl(info_items)
-        for name, _html in info_items:
-            report.add_page(_make_tooltip_page(name, tokens))
+        for name, _html, height in info_items:
+            report.add_page(_make_tooltip_page(name, tokens, height))
 
     return report
 

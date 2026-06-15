@@ -29,11 +29,14 @@ class TestCollectInfo:
             ColSpec(span=6, name="v3"),  # sem config -> ignorado
         ]
         items = collect_info(_layout(cols))
-        names = [n for n, _ in items]
+        names = [t[0] for t in items]
         assert names == ["v1", "v2"]
+        htmls = {t[0]: t[1] for t in items}
+        heights = {t[0]: t[2] for t in items}
         # fallback do título do modal: info.title ou title do visual
-        assert "A" in dict(items)["v1"]
-        assert "T2" in dict(items)["v2"]
+        assert "A" in htmls["v1"]
+        assert "T2" in htmls["v2"]
+        assert all(h > 0 for h in heights.values())  # altura estimada presente
 
     def test_ignora_col_sem_name(self):
         cols = [ColSpec(span=12, config=ColConfig(title="x"))]

@@ -13,6 +13,7 @@ a report-page tooltip to that page (see the engine).
 """
 from __future__ import annotations
 
+import math
 import re
 import uuid
 
@@ -65,29 +66,73 @@ def _m_escape(s: str) -> str:
     return s.replace('"', '""')
 
 
-def build_info_html(title: str, description: str, footer: str) -> str:
-    """Modal card HTML for one component's info (header/footer #E6E6E6)."""
+def _text_lines(text: str, font: int, text_w: float) -> int:
+    """Rough wrapped-line count for *text* at *font* px within *text_w* px."""
+    if not text:
+        return 1
+    cpl = max(1, int(text_w / (font * 0.52)))  # ~0.52 px-per-char for a proportional font
+    return max(1, math.ceil(len(text) / cpl))
+
+
+def estimate_modal_height(
+    title: str, description: str, footer: str, *,
+    width: float, header_font: int, body_font: int, footer_font: int, padding: int,
+    content_scale: float = 1.25, min_height: float = 90,
+) -> int:
+    """Estimate the modal card height (px) and add a buffer so it never scrolls.
+
+    Height is unknown until rendered, so we approximate from text length and the
+    theme font/padding, then scale by ``content_scale`` (e.g. 1.25 = window 25%
+    larger than the content). The HTML Content visual can't be scrolled inside a
+    tooltip, so over-sizing slightly is the safe side.
+    """
+    ph = padding + 4
+    text_w = max(40.0, width - 2 * ph - 6)
+    header_h = 2 * padding + _text_lines("(i) " + title, header_font, text_w) * header_font * 1.35
+    body_h = 2 * padding + _text_lines(description, body_font, text_w) * body_font * 1.45
+    footer_h = 2 * padding + _text_lines(footer, footer_font, text_w) * footer_font * 1.35
+    content = header_h + body_h + footer_h + 6
+    return int(round(max(min_height, content * content_scale)))
+
+
+def build_info_html(
+    title: str, description: str, footer: str, *,
+    header_font: int = 12, body_font: int = 10, footer_font: int = 9, padding: int = 8,
+) -> str:
+    """Modal card HTML for one component's info (header/footer #E6E6E6).
+
+    Font sizes (px) and padding are theme-driven (``info_modal`` tokens) so the
+    card stays proportional to the tooltip page size.
+    """
+    ph = padding + 4  # horizontal padding a touch wider than vertical
     return (
-        "<div style='border:1px solid #d0d7de;border-radius:8px;overflow:hidden;"
+        "<div style='border:1px solid #d0d7de;border-radius:6px;overflow:hidden;"
         "background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"
-        "box-shadow:0 2px 4px rgba(0,0,0,.08);'>"
-        "<div style='background:#E6E6E6;color:#212529;padding:12px 16px;font-size:16px;font-weight:600;'>"
+        "box-shadow:0 1px 3px rgba(0,0,0,.08);'>"
+        f"<div style='background:#E6E6E6;color:#212529;padding:{padding}px {ph}px;font-size:{header_font}px;font-weight:600;'>"
         f"&#8505;&#65039; {title}</div>"
-        "<div style='padding:16px;color:#212529;font-size:14px;line-height:1.6;text-align:justify;'>"
+        f"<div style='padding:{padding}px {ph}px;color:#212529;font-size:{body_font}px;line-height:1.45;text-align:justify;'>"
         f"{description}</div>"
-        "<div style='background:#E6E6E6;border-top:1px solid #d0d7de;padding:12px 16px;color:#6c757d;font-size:12px;'>"
+        f"<div style='background:#E6E6E6;border-top:1px solid #d0d7de;padding:{padding}px {ph}px;color:#6c757d;font-size:{footer_font}px;'>"
         f"{footer}</div>"
         "</div>"
     )
 
 
-def collect_info(layout: LayoutSpec) -> list[tuple[str, str]]:
-    """(visual_name, html) for every layout col with a ``config:`` and a ``name``.
+def collect_info(layout: LayoutSpec, tokens: dict | None = None) -> list[tuple[str, str, int]]:
+    """(visual_name, html, height) for every layout col with a ``config:`` + ``name``.
 
     The modal title falls back to the visual's ``title`` when ``info.title`` is
-    empty, so the header is never blank.
+    empty. ``height`` is the estimated tooltip-page height (with the content-scale
+    buffer) so the modal doesn't scroll.
     """
-    out: list[tuple[str, str]] = []
+    style = (tokens or {}).get("info_modal", {}) or {}
+    style_kw = {k: style[k] for k in ("header_font", "body_font", "footer_font", "padding") if k in style}
+    width = float(style.get("width", 230))
+    hf = int(style.get("header_font", 12)); bf = int(style.get("body_font", 10))
+    ff = int(style.get("footer_font", 9)); pad = int(style.get("padding", 8))
+    scale = float(style.get("content_scale", 1.25)); minh = float(style.get("min_height", 90))
+    out: list[tuple[str, str, int]] = []
     seen: set[str] = set()
     for page in layout.pages:
         for row in page.rows:
@@ -96,8 +141,13 @@ def collect_info(layout: LayoutSpec) -> list[tuple[str, str]]:
                     continue
                 info = col.config.info
                 title = _norm(info.title) or _norm(col.config.title)
-                html = build_info_html(title, _norm(info.description), _norm(info.footer))
-                out.append((col.name, html))
+                desc = _norm(info.description); foot = _norm(info.footer)
+                html = build_info_html(title, desc, foot, **style_kw)
+                height = estimate_modal_height(
+                    title, desc, foot, width=width, header_font=hf, body_font=bf,
+                    footer_font=ff, padding=pad, content_scale=scale, min_height=minh,
+                )
+                out.append((col.name, html, height))
                 seen.add(col.name)
     return out
 
@@ -124,8 +174,8 @@ def _icon_measure_block() -> str:
 
 def build_config_tmdl(items: list[tuple[str, str]]) -> str:
     """TMDL for the one-row static table (one info col per visual + an `icon` measure)."""
-    col_names = [info_column(name) for name, _ in items]
-    values = [html for _, html in items]
+    col_names = [info_column(t[0]) for t in items]
+    values = [t[1] for t in items]
 
     columns = "\n\n".join(_column_block(cn) for cn in col_names)
     type_lines = ",\n".join(f"                            {cn} = text" for cn in col_names)
