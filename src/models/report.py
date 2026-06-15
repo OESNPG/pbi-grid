@@ -27,6 +27,7 @@ class Report:
     registered_resources: list[tuple[str, Path]] = field(default_factory=list)  # (item_name, source_path)
     palette_name: str | None = None         # theme file name, e.g. "govbr"
     palette_data: dict | None = None        # full theme JSON dict written to BaseThemes/
+    config_table_tmdl: str | None = None     # generated `config` table TMDL (info-modal data); written to the SemanticModel at render
 
     def add_page(self, page: Page) -> None:
         self.pages.append(page)

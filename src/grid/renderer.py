@@ -56,7 +56,37 @@ def render(report: Report, output: Path, source_report_path: Path | None = None)
 
     report.to_pbir(report_dir)
 
+    if report.config_table_tmdl:
+        _write_config_table(report, project_dir)
+
     if not (project_dir / f"{report.name}.pbip").exists():
         _write_pbip(report, project_dir)
 
     return report_dir
+
+
+def _write_config_table(report: Report, project_dir: Path) -> None:
+    """Write the generated info-modal table into the project's SemanticModel.
+
+    The info-modal HTML lives in a static table the HTML Content visuals read, plus
+    a model.tmdl reference so the table is recognized even when the source project
+    no longer declares it. The SemanticModel was copied alongside the .Report (or is
+    the in-place source); we only touch the generated table file and the reference.
+    """
+    from .info_table import TABLE_NAME, register_config_in_model
+
+    sm_def = project_dir / f"{report.name}.SemanticModel" / "definition"
+    tables_dir = sm_def / "tables"
+    if not tables_dir.exists():
+        print(f"  WARNING: SemanticModel tables dir not found ({tables_dir}); skipped config table.")
+        return
+    (tables_dir / f"{TABLE_NAME}.tmdl").write_text(report.config_table_tmdl, encoding="utf-8")
+
+    model = sm_def / "model.tmdl"
+    if model.exists():
+        text = model.read_text(encoding="utf-8")
+        new = register_config_in_model(text)
+        if new != text:
+            model.write_text(new, encoding="utf-8")
+    else:
+        print(f"  WARNING: model.tmdl not found ({model}); '{TABLE_NAME}' not registered.")

@@ -489,6 +489,19 @@ class TestTitleInjection:
         result = _build_page(page, self._CANVAS, _pmap(page), source_visuals={"c": self._src()})
         assert "visualContainerObjects" not in result.visuals[0].raw_data["visual"]
 
+    def test_title_card_sobrescreve_displayname(self):
+        # cardVisual: o rótulo é o displayName da projeção, não o título de header
+        src = Visual(name="c", visual_type="cardVisual",
+                     position=Position(x=0, y=0, z=0, width=1, height=1, tab_order=0),
+                     raw_data={"name": "c", "visual": {"visualType": "cardVisual", "query": {
+                         "queryState": {"Data": {"projections": [{"field": {}, "displayName": "Velho"}]}}}}})
+        col = _col(12, name="c", config=ColConfig(title="Novo Rotulo"))
+        page = _page([_row("r0", 100, [col])])
+        result = _build_page(page, self._CANVAS, _pmap(page), source_visuals={"c": src})
+        proj = result.visuals[0].raw_data["visual"]["query"]["queryState"]["Data"]["projections"][0]
+        assert proj["displayName"] == "Novo Rotulo"
+        assert "visualContainerObjects" not in result.visuals[0].raw_data["visual"]
+
     def test_title_em_visual_bare(self):
         col = _col(12, visual="barChart", config=ColConfig(title="Bare"))
         page = _page([_row("r0", 100, [col])])

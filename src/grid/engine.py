@@ -279,8 +279,10 @@ def _render_col(
 
     if col.config and not col.component and visuals:
         if col.config.title:
-            _apply_title(visuals[0], col.config.title)   # override the visual's header title
-        # info (title/description/footer) → help modal: rendering deferred (see config docs).
+            _apply_title(visuals[0], col.config.title, visuals[0].visual_type)   # header title (or card label)
+        if col.name:
+            # ⓘ trigger card → hidden tooltip page with the component's info modal
+            visuals.append(_make_info_icon_card(cell, col.name, cell.z + 700, tokens, visuals[0].visual_type))
 
     for i, ov in enumerate(col.overlay):
         visuals.extend(_render_overlay(ov, cell, source_visuals, tokens, cell.z + 500 + i))
@@ -292,13 +294,22 @@ def _text_literal(text: str) -> str:
     return "'" + text.replace("'", "''") + "'"
 
 
-def _apply_title(visual: Visual, text: str) -> None:
-    """Override a visual's header title text (visualContainerObjects.title), mutating it.
+def _apply_title(visual: Visual, text: str, vtype: str | None = None) -> None:
+    """Set the component's visible title from config, mutating the visual.
 
-    Works for source visuals (raw_data) and bare visuals (config). Only the title
-    text is set; visibility/alignment stay under the theme and the source visual,
-    so the generated output is authoritative for the title wording.
+    For most visuals this is the header title (visualContainerObjects.title). A
+    cardVisual, however, shows the field's *display name* as its label (not the
+    header title), so there we override the query projection's ``displayName``
+    instead — the equivalent of renaming the field on the visual.
     """
+    if vtype == "cardVisual" and visual.raw_data is not None:
+        raw = copy.deepcopy(visual.raw_data)
+        roles = raw.get("visual", {}).get("query", {}).get("queryState", {})
+        for role in roles.values():
+            for proj in role.get("projections", []):
+                proj["displayName"] = text
+        visual.raw_data = raw
+        return
     lit = {"expr": {"Literal": {"Value": _text_literal(text)}}}
     if visual.raw_data is not None:
         raw = copy.deepcopy(visual.raw_data)
@@ -310,6 +321,130 @@ def _apply_title(visual: Visual, text: str) -> None:
     titles[0].setdefault("properties", {})["text"] = lit
     if raw is not None:
         visual.raw_data = raw
+
+
+_PAGE_SCHEMA_2_1 = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json"
+
+
+def _make_info_icon_card(cell: Cell, name: str, z: int, tokens: dict, vtype: str | None = None) -> Visual:
+    """Small ⓘ card (data visual) at the cell's top-right, carrying a report-page
+    tooltip to the component's hidden info page. A data visual is required because
+    buttons/images/shapes don't fire report-page tooltips. Styled clean/transparent.
+    """
+    from .info_table import TABLE_NAME, ICON_MEASURE, info_page_id, info_icon_id
+
+    cfg = (tokens.get("info_icon", {}) if tokens else {}) or {}
+    size = float(cfg.get("size", 28))
+    font_size = cfg.get("font_size", 10)
+    margin = float(cfg.get("margin", 2))
+    page_id = info_page_id(name)
+    _TABLE_TYPES = {"tableEx", "pivotTable"}
+    if vtype == "cardVisual":
+        # KPI cards: vertically centered on the right (clears the value/accent bar)
+        card_margin = float(cfg.get("card_margin", 16))
+        card_v_offset = float(cfg.get("card_v_offset", -8))   # 8px above the vertical center
+        x = round(cell.x + cell.width - size - card_margin, 4)
+        y = round(cell.y + (cell.height - size) / 2 + card_v_offset, 4)
+    elif vtype in _TABLE_TYPES:
+        # tables: top-right corner
+        x = round(cell.x + cell.width - size - margin, 4)
+        y = round(cell.y + margin, 4)
+    else:
+        # charts/maps: nudged down so it clears the chart title
+        chart_top = float(cfg.get("chart_top_margin", 16))
+        x = round(cell.x + cell.width - size - margin, 4)
+        y = round(cell.y + chart_top, 4)
+    return Visual(
+        name=info_icon_id(name),
+        visual_type="cardVisual",
+        position=Position(x=x, y=y, z=z, width=size, height=size, tab_order=z),
+        config={
+            "query": {"queryState": {"Data": {"projections": [{
+                "field": {"Measure": {"Expression": {"SourceRef": {"Entity": TABLE_NAME}}, "Property": ICON_MEASURE}},
+                "queryRef": f"{TABLE_NAME}.{ICON_MEASURE}",
+                "nativeQueryRef": ICON_MEASURE,
+            }]}}},
+            "objects": {
+                # label off (hides the measure name "icon"); chrome stripped like the
+                # donut total cards so the glyph isn't clipped in a small card.
+                "label": [{"properties": {"show": literal("false")}, "selector": {"id": "default"}}],
+                "value": [{"properties": {
+                    "fontSize": literal(f"{font_size}D"),
+                    "transparency": literal("0D"),
+                    "horizontalAlignment": literal("'center'"),
+                }, "selector": {"id": "default"}}],
+                "cardCalloutArea": [{"properties": {
+                    "show": literal("false"),
+                    "backgroundTransparency": literal("100D"),
+                }, "selector": {"id": "default"}}],
+                "outline": [{"properties": {"show": literal("false")}, "selector": {"id": "default"}}],
+                "divider": [{"properties": {"show": literal("false")}, "selector": {"id": "default"}}],
+                "fillCustom": [{"properties": {"show": literal("false")}}],
+                "layout": [{"properties": {"backgroundShow": literal("false"), "paddingUniform": literal("0L")}, "selector": {"id": "default"}}],
+                # zero inner padding so the glyph isn't swallowed in a small card
+                # (Power BI appears to clamp uniform padding to a 1L minimum)
+                "padding": [{"properties": {"paddingUniform": literal("0L")}, "selector": {"id": "default"}}],
+            },
+            "visualContainerObjects": {
+                "visualHeader": [{"properties": {"show": literal("false")}}],
+                "padding": [{"properties": {
+                    "top": literal("0D"), "bottom": literal("0D"),
+                    "left": literal("0D"), "right": literal("0D"),
+                }}],
+                "background": [{"properties": {
+                    "show": literal("false"),
+                    "transparency": literal("100D"),
+                }}],
+                "visualTooltip": [{"properties": {
+                    "show": literal("true"),
+                    "section": literal(f"'{page_id}'"),
+                }}],
+            },
+            "drillFilterOtherVisuals": True,
+        },
+    )
+
+
+def _make_tooltip_page(name: str, tokens: dict) -> Page:
+    """Hidden tooltip page rendering a component's info modal (HTML Content visual
+    bound to ``pbi_grid_config[info_<name>]``)."""
+    from .info_table import (
+        TABLE_NAME, HTML_CONTENT_VISUAL_TYPE, info_column, info_page_id, tooltip_visual_id,
+    )
+
+    cfg = (tokens.get("info_modal", {}) if tokens else {}) or {}
+    w = int(cfg.get("width", 460))
+    h = int(cfg.get("height", 400))
+    page_id = info_page_id(name)
+    column = info_column(name)
+    html_visual = Visual(
+        name=tooltip_visual_id(name),
+        visual_type=HTML_CONTENT_VISUAL_TYPE,
+        position=Position(x=0, y=0, z=1000, width=w, height=h, tab_order=0),
+        config={
+            "query": {"queryState": {"content": {"projections": [{
+                "field": {"Column": {"Expression": {"SourceRef": {"Entity": TABLE_NAME}}, "Property": column}},
+                "queryRef": f"{TABLE_NAME}.{column}",
+                "nativeQueryRef": column,
+            }]}}},
+            "drillFilterOtherVisuals": True,
+        },
+    )
+    page = Page(
+        name=page_id,
+        display_name=f"Info {name[:8]}",
+        width=w,
+        height=h,
+        raw_page_data={
+            "$schema": _PAGE_SCHEMA_2_1,
+            "name": page_id,
+            "pageBinding": {"name": f"InfoTT_{name[:12]}", "type": "Default", "parameters": []},
+            "visibility": "HiddenInViewMode",
+            "type": "Tooltip",
+        },
+    )
+    page.visuals = [html_visual]
+    return page
 
 
 def _overlay_cell(parent: Cell, ov: OverlaySpec, z: int) -> Cell:
@@ -594,6 +729,13 @@ def build(layout: LayoutSpec, debug: bool = False) -> Report:
 
     if pkg_theme_dir:
         _register_resources(report, layout, tokens, pkg_theme_dir)
+
+    from .info_table import collect_info, build_config_tmdl
+    info_items = collect_info(layout)
+    if info_items:
+        report.config_table_tmdl = build_config_tmdl(info_items)
+        for name, _html in info_items:
+            report.add_page(_make_tooltip_page(name, tokens))
 
     return report
 
