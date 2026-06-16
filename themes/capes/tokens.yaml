@@ -15,6 +15,7 @@ info_modal:        # página-tooltip do modal
   width: 230          # largura (px) — controla a quebra de linha do texto
   min_height: 90      # altura mínima (px)
   content_scale: 1.25 # janela = altura estimada do conteúdo × isto (folga p/ não rolar)
+  background: "#FFFFFF" # fundo da página-tooltip (remove a moldura/borda cinza)
   header_font: 12     # fonte do título do card (px)
   body_font: 10       # fonte do corpo/descrição (px)
   footer_font: 9      # fonte do rodapé (px)
@@ -650,11 +651,143 @@ palette:
           position: RightCenter
         labels:
         - labelStyle: Data value, percent of total
+    # Layout de tabela/matriz portado da página "Detail" do sample "Revenue
+    # Opportunities": linhas de grade cinza-claras (#EDEDED), linhas zebradas
+    # (#F5F5F5 / #F6F6F6), cabeçalho em negrito na cor da marca com borda inferior,
+    # e densidade compacta (rowPadding 2, texto 10). Cores adaptadas à paleta capes.
     pivotTable:
       '*':
+        grid:
+        - outlineColor:
+            solid:
+              color: '#EDEDED'
+          outlineWeight: 3
+          gridVertical: true
+          gridVerticalColor:
+            solid:
+              color: '#EDEDED'
+          gridVerticalWeight: 4
+          gridHorizontal: true
+          gridHorizontalColor:
+            solid:
+              color: '#EDEDED'
+          gridHorizontalWeight: 3
+          rowPadding: 2
+          textSize: 10
+        columnHeaders:
+        - fontColor:
+            solid:
+              color: '#212529'
+          backColor:
+            solid:
+              color: '#E6E6E6'
+          fontFamily: "'Segoe UI Bold', wf_segoe-ui_bold, helvetica, arial, sans-serif"
+          fontSize: 11
+          wordWrap: false
+          outlineStyle: 4
         rowHeaders:
         - showExpandCollapseButtons: true
           legacyStyleDisabled: true
+          steppedLayoutIndentation: 26
+          wordWrap: true
+          outlineStyle: 2
+        values:
+        - fontColorPrimary:
+            solid:
+              color: '#333333'
+          backColorPrimary:
+            solid:
+              color: '#F5F5F5'
+          fontColorSecondary:
+            solid:
+              color: '#333333'
+          backColorSecondary:
+            solid:
+              color: '#F6F6F6'
+          bandedRowHeaders: true
+          valuesOnRow: false
+          outlineStyle: 0
+        stylePreset:
+        - name: 'None'
+        subTotals:
+        - backColor:
+            solid:
+              color: '#E6E6E6'
+          fontColor:
+            solid:
+              color: '#212529'
+          applyToHeaders: true
+        rowTotal:
+        - backColor:
+            solid:
+              color: '#E6E6E6'
+          fontColor:
+            solid:
+              color: '#212529'
+          applyToHeaders: true
+        columnTotal:
+        - backColor:
+            solid:
+              color: '#E6E6E6'
+          fontColor:
+            solid:
+              color: '#212529'
+          applyToHeaders: true
+    tableEx:
+      '*':
+        grid:
+        - outlineColor:
+            solid:
+              color: '#EDEDED'
+          outlineWeight: 3
+          gridVertical: true
+          gridVerticalColor:
+            solid:
+              color: '#EDEDED'
+          gridVerticalWeight: 4
+          gridHorizontal: true
+          gridHorizontalColor:
+            solid:
+              color: '#EDEDED'
+          gridHorizontalWeight: 3
+          rowPadding: 2
+          textSize: 10
+        columnHeaders:
+        - fontColor:
+            solid:
+              color: '#212529'
+          backColor:
+            solid:
+              color: '#E6E6E6'
+          fontFamily: "'Segoe UI Bold', wf_segoe-ui_bold, helvetica, arial, sans-serif"
+          fontSize: 11
+          wordWrap: false
+          outlineStyle: 4
+        values:
+        - fontColorPrimary:
+            solid:
+              color: '#333333'
+          backColorPrimary:
+            solid:
+              color: '#F5F5F5'
+          fontColorSecondary:
+            solid:
+              color: '#333333'
+          backColorSecondary:
+            solid:
+              color: '#F6F6F6'
+          outlineStyle: 0
+        stylePreset:
+        - name: 'None'
+        total:
+        - backColor:
+            solid:
+              color: '#E6E6E6'
+          fontColor:
+            solid:
+              color: '#212529'
+          fontFamily: "'Segoe UI Bold', wf_segoe-ui_bold, helvetica, arial, sans-serif"
+          outlineStyle: 0
     multiRowCard:
       '*':
         card:

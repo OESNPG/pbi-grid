@@ -415,6 +415,7 @@ def _make_tooltip_page(name: str, tokens: dict, height: int) -> Page:
     cfg = (tokens.get("info_modal", {}) if tokens else {}) or {}
     w = int(cfg.get("width", 230))
     h = int(height)
+    bg = cfg.get("background", "#FFFFFF")
     page_id = info_page_id(name)
     column = info_column(name)
     html_visual = Visual(
@@ -445,6 +446,16 @@ def _make_tooltip_page(name: str, tokens: dict, height: int) -> Page:
             "$schema": _PAGE_SCHEMA_2_1,
             "name": page_id,
             "pageBinding": {"name": f"InfoTT_{name[:12]}", "type": "Default", "parameters": []},
+            "objects": {
+                # solid page background + outspace so the tooltip has no grey frame/border
+                "background": [{"properties": {
+                    "color": {"solid": {"color": literal(f"'{bg}'")}},
+                    "transparency": literal("0D"),
+                }}],
+                "outspace": [{"properties": {
+                    "color": {"solid": {"color": literal(f"'{bg}'")}},
+                }}],
+            },
             "visibility": "HiddenInViewMode",
             "type": "Tooltip",
         },
