@@ -86,12 +86,14 @@ def estimate_modal_height(
     larger than the content). The HTML Content visual can't be scrolled inside a
     tooltip, so over-sizing slightly is the safe side.
     """
+    title = (title or "").strip()
+    footer = (footer or "").strip()
     ph = padding + 4
     text_w = max(40.0, width - 2 * ph - 6)
-    header_h = 2 * padding + _text_lines("(i) " + title, header_font, text_w) * header_font * 1.35
     body_h = 2 * padding + _text_lines(description, body_font, text_w) * body_font * 1.45
-    footer_h = 2 * padding + _text_lines(footer, footer_font, text_w) * footer_font * 1.35
-    content = header_h + body_h + footer_h + 6
+    header_h = (2 * padding + _text_lines("(i) " + title, header_font, text_w) * header_font * 1.35) if title else 0
+    footer_h = (2 * padding + _text_lines(footer, footer_font, text_w) * footer_font * 1.35) if footer else 0
+    content = header_h + body_h + footer_h + (6 if (title or footer) else 0)
     return int(round(max(min_height, content * content_scale)))
 
 
@@ -101,21 +103,43 @@ def build_info_html(
 ) -> str:
     """Modal card HTML for one component's info (header/footer #E6E6E6).
 
+    The header renders only when there's a ``title`` and the footer only when
+    there's ``footer`` text; the card chrome (border/shadow) appears only when at
+    least one of them is present. When both are empty the modal collapses to a
+    bare body: just the description, with no header, no footer and no border.
+
     Font sizes (px) and padding are theme-driven (``info_modal`` tokens) so the
     card stays proportional to the tooltip page size.
     """
+    title = (title or "").strip()
+    footer = (footer or "").strip()
     ph = padding + 4  # horizontal padding a touch wider than vertical
+    body = (
+        f"<div style='padding:{padding}px {ph}px;color:#212529;font-size:{body_font}px;"
+        f"line-height:1.45;text-align:justify;'>{description}</div>"
+    )
+    if not title and not footer:
+        # Bare modal: only the description, no header/footer, no card border/shadow.
+        return (
+            "<div style='overflow:hidden;background:#ffffff;"
+            "font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'>"
+            f"{body}</div>"
+        )
+    header = (
+        f"<div style='background:#E6E6E6;color:#212529;padding:{padding}px {ph}px;"
+        f"font-size:{header_font}px;font-weight:600;'>&#8505;&#65039; {title}</div>"
+        if title else ""
+    )
+    foot = (
+        f"<div style='background:#E6E6E6;border-top:1px solid #d0d7de;padding:{padding}px {ph}px;"
+        f"color:#6c757d;font-size:{footer_font}px;'>{footer}</div>"
+        if footer else ""
+    )
     return (
         "<div style='border:1px solid #d0d7de;border-radius:6px;overflow:hidden;"
         "background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"
         "box-shadow:0 1px 3px rgba(0,0,0,.08);'>"
-        f"<div style='background:#E6E6E6;color:#212529;padding:{padding}px {ph}px;font-size:{header_font}px;font-weight:600;'>"
-        f"&#8505;&#65039; {title}</div>"
-        f"<div style='padding:{padding}px {ph}px;color:#212529;font-size:{body_font}px;line-height:1.45;text-align:justify;'>"
-        f"{description}</div>"
-        f"<div style='background:#E6E6E6;border-top:1px solid #d0d7de;padding:{padding}px {ph}px;color:#6c757d;font-size:{footer_font}px;'>"
-        f"{footer}</div>"
-        "</div>"
+        f"{header}{body}{foot}</div>"
     )
 
 
