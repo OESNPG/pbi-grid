@@ -88,12 +88,11 @@ def estimate_modal_height(
     """
     title = (title or "").strip()
     footer = (footer or "").strip()
-    ph = padding + 4
-    text_w = max(40.0, width - 2 * ph - 6)
-    body_h = 2 * padding + _text_lines(description, body_font, text_w) * body_font * 1.45
-    header_h = (2 * padding + _text_lines("(i) " + title, header_font, text_w) * header_font * 1.35) if title else 0
-    footer_h = (2 * padding + _text_lines(footer, footer_font, text_w) * footer_font * 1.35) if footer else 0
-    content = header_h + body_h + footer_h + (6 if (title or footer) else 0)
+    text_w = max(40.0, width - 2 * padding - 6)
+    body_h = _text_lines(description, body_font, text_w) * body_font * 1.45
+    header_h = (_text_lines(title, header_font, text_w) * header_font * 1.35 + 6) if title else 0
+    footer_h = (_text_lines(footer, footer_font, text_w) * footer_font * 1.35 + 8) if footer else 0
+    content = 2 * padding + header_h + body_h + footer_h
     return int(round(max(min_height, content * content_scale)))
 
 
@@ -101,45 +100,34 @@ def build_info_html(
     title: str, description: str, footer: str, *,
     header_font: int = 12, body_font: int = 10, footer_font: int = 9, padding: int = 8,
 ) -> str:
-    """Modal card HTML for one component's info (header/footer #E6E6E6).
+    """Minimalist modal HTML: a plain heading (h3/h4-like) with the description
+    right below — no header background, border, shadow or icon.
 
-    The header renders only when there's a ``title`` and the footer only when
-    there's ``footer`` text; the card chrome (border/shadow) appears only when at
-    least one of them is present. When both are empty the modal collapses to a
-    bare body: just the description, with no header, no footer and no border.
+    The heading renders only when there's a ``title`` and the footer only when
+    there's ``footer`` text; when both are empty only the description shows.
 
     Font sizes (px) and padding are theme-driven (``info_modal`` tokens) so the
-    card stays proportional to the tooltip page size.
+    text stays proportional to the tooltip page size.
     """
     title = (title or "").strip()
     footer = (footer or "").strip()
-    ph = padding + 4  # horizontal padding a touch wider than vertical
-    body = (
-        f"<div style='padding:{padding}px {ph}px;color:#212529;font-size:{body_font}px;"
-        f"line-height:1.45;text-align:justify;'>{description}</div>"
-    )
-    if not title and not footer:
-        # Bare modal: only the description, no header/footer, no card border/shadow.
-        return (
-            "<div style='overflow:hidden;background:#ffffff;"
-            "font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'>"
-            f"{body}</div>"
-        )
-    header = (
-        f"<div style='background:#E6E6E6;color:#212529;padding:{padding}px {ph}px;"
-        f"font-size:{header_font}px;font-weight:600;'>&#8505;&#65039; {title}</div>"
+    heading = (
+        f"<div style='font-size:{header_font}px;font-weight:600;color:#212529;"
+        f"margin:0 0 6px 0;'>{title}</div>"
         if title else ""
     )
+    body = (
+        f"<div style='font-size:{body_font}px;line-height:1.45;color:#212529;"
+        f"text-align:justify;'>{description}</div>"
+    )
     foot = (
-        f"<div style='background:#E6E6E6;border-top:1px solid #d0d7de;padding:{padding}px {ph}px;"
-        f"color:#6c757d;font-size:{footer_font}px;'>{footer}</div>"
+        f"<div style='font-size:{footer_font}px;color:#6c757d;margin:8px 0 0 0;'>{footer}</div>"
         if footer else ""
     )
     return (
-        "<div style='border:1px solid #d0d7de;border-radius:6px;overflow:hidden;"
-        "background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;"
-        "box-shadow:0 1px 3px rgba(0,0,0,.08);'>"
-        f"{header}{body}{foot}</div>"
+        f"<div style='background:#ffffff;padding:{padding}px;"
+        "font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'>"
+        f"{heading}{body}{foot}</div>"
     )
 
 

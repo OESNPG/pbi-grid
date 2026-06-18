@@ -19,19 +19,22 @@ class TestBuildInfoHtml:
         html = build_info_html("Titulo", "Corpo da descricao", "Rodape")
         assert "Titulo" in html and "Corpo da descricao" in html and "Rodape" in html
         assert html.startswith("<div") and html.rstrip().endswith("</div>")
-        assert "border:1px" in html  # card com moldura quando há header/footer
+        # layout minimalista: título em negrito, sem header colorido/borda/ícone
+        assert "font-weight:600" in html
+        assert "#E6E6E6" not in html and "border:1px" not in html
+        assert "box-shadow" not in html and "&#8505;" not in html
 
     def test_sem_titulo_e_rodape_colapsa_para_corpo(self):
         html = build_info_html("", "Somente a descricao", "")
         assert "Somente a descricao" in html
-        # sem header (#E6E6E6), sem ícone e sem moldura/sombra
-        assert "#E6E6E6" not in html
-        assert "&#8505;" not in html
-        assert "border:1px" not in html and "box-shadow" not in html
+        # sem heading (sem negrito) e sem rodapé
+        assert "font-weight:600" not in html
+        assert "#E6E6E6" not in html and "&#8505;" not in html
 
-    def test_apenas_titulo_vazio_mantem_rodape_e_moldura(self):
+    def test_apenas_titulo_vazio_mantem_rodape(self):
         html = build_info_html("", "Corpo", "Rodape")
-        assert "Rodape" in html and "border:1px" in html
+        assert "Rodape" in html and "Corpo" in html
+        assert "font-weight:600" not in html  # sem título => sem heading
 
 
 class TestCollectInfo:
