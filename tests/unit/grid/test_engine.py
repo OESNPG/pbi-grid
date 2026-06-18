@@ -391,6 +391,35 @@ class TestTextboxFontNormalization:
 
 
 # ── Overlay (card sobre donut) ─────────────────────────────────────────────────
+class TestInfoIconPlacement:
+    from src.grid.schema import Cell as _Cell
+
+    def _icon(self, **kw):
+        from src.grid.engine import _make_info_icon_card
+        from src.grid.schema import IconSpec, Cell
+        cell = Cell(x=100, y=200, width=300, height=64, z=10)
+        spec = IconSpec(**kw) if kw else None
+        return _make_info_icon_card(cell, "v1", 999, {}, "slicer", icon=spec)
+
+    def test_override_offset_y_define_altura(self):
+        # override estilo overlay: valign top default => y = cell.y + offset_y
+        ic = self._icon(offset_y=30)
+        assert ic.position.y == 200 + 30
+        assert ic.position.x == 100 + 300 - 28   # align right default (flush)
+
+    def test_override_align_valign(self):
+        # align=left, valign=bottom, size 24 numa célula 300x64 em (100,200)
+        ic = self._icon(align="left", valign="bottom", size=24)
+        assert ic.position.x == 100                      # left
+        assert ic.position.y == 200 + 64 - 24            # bottom
+        assert ic.position.width == 24 and ic.position.height == 24
+
+    def test_override_offset_x_afasta_da_direita(self):
+        ic = self._icon(offset_x=-40)       # 40px à esquerda do canto direito
+        # align default = right: x = 100 + 300 - size; size default 28 => 372; -40 => 332
+        assert ic.position.x == 332
+
+
 class TestOverlay:
     _CANVAS = Canvas(width=1280, height=720, gutter=0)
 

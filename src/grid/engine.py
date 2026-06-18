@@ -282,7 +282,7 @@ def _render_col(
             _apply_title(visuals[0], col.config.title, visuals[0].visual_type)   # header title (or card label)
         if col.name:
             # ⓘ trigger card → hidden tooltip page with the component's info modal
-            visuals.append(_make_info_icon_card(cell, col.name, cell.z + 700, tokens, visuals[0].visual_type))
+            visuals.append(_make_info_icon_card(cell, col.name, cell.z + 700, tokens, visuals[0].visual_type, icon=col.info_icon))
 
     for i, ov in enumerate(col.overlay):
         visuals.extend(_render_overlay(ov, cell, source_visuals, tokens, cell.z + 500 + i))
@@ -326,20 +326,44 @@ def _apply_title(visual: Visual, text: str, vtype: str | None = None) -> None:
 _PAGE_SCHEMA_2_1 = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json"
 
 
-def _make_info_icon_card(cell: Cell, name: str, z: int, tokens: dict, vtype: str | None = None) -> Visual:
+def _make_info_icon_card(cell: Cell, name: str, z: int, tokens: dict, vtype: str | None = None, icon=None) -> Visual:
     """Small ⓘ card (data visual) at the cell's top-right, carrying a report-page
     tooltip to the component's hidden info page. A data visual is required because
     buttons/images/shapes don't fire report-page tooltips. Styled clean/transparent.
+
+    When the col supplies an ``info_icon`` override (the icon analogue of
+    ``overlay``), it's placed within the cell by align/valign + offset; otherwise
+    the placement is chosen by visual type.
     """
     from .info_table import TABLE_NAME, ICON_MEASURE, info_page_id, info_icon_id
 
     cfg = (tokens.get("info_icon", {}) if tokens else {}) or {}
     size = float(cfg.get("size", 28))
+    if icon is not None and icon.size is not None:
+        size = float(icon.size)
     font_size = cfg.get("font_size", 10)
     margin = float(cfg.get("margin", 2))
     page_id = info_page_id(name)
     _TABLE_TYPES = {"tableEx", "pivotTable"}
-    if vtype == "cardVisual":
+    if icon is not None and (icon.align or icon.valign or icon.offset_x or icon.offset_y):
+        # explicit override — positioned within the cell like an overlay
+        align = icon.align or "right"
+        valign = icon.valign or "top"
+        if align == "left":
+            x = cell.x
+        elif align == "center":
+            x = cell.x + (cell.width - size) / 2
+        else:
+            x = cell.x + cell.width - size
+        if valign == "bottom":
+            y = cell.y + cell.height - size
+        elif valign == "center":
+            y = cell.y + (cell.height - size) / 2
+        else:
+            y = cell.y
+        x = round(x + icon.offset_x, 4)
+        y = round(y + icon.offset_y, 4)
+    elif vtype == "cardVisual":
         # KPI cards: vertically centered on the right (clears the value/accent bar)
         card_margin = float(cfg.get("card_margin", 16))
         card_v_offset = float(cfg.get("card_v_offset", -8))   # 8px above the vertical center
@@ -349,6 +373,14 @@ def _make_info_icon_card(cell: Cell, name: str, z: int, tokens: dict, vtype: str
         # tables: top-right corner
         x = round(cell.x + cell.width - size - margin, 4)
         y = round(cell.y + margin, 4)
+    elif vtype == "slicer":
+        # slicers: own placement so the ⓘ clears the slicer's header "eraser"
+        # (clear-selection) button. Tunable via slicer_margin (right) and
+        # slicer_top_margin (down from the cell top; may be negative).
+        slicer_margin = float(cfg.get("slicer_margin", 40))
+        slicer_top = float(cfg.get("slicer_top_margin", 4))
+        x = round(cell.x + cell.width - size - slicer_margin, 4)
+        y = round(cell.y + slicer_top, 4)
     else:
         # charts/maps: nudged down so it clears the chart title
         chart_top = float(cfg.get("chart_top_margin", 16))

@@ -45,6 +45,22 @@ class OverlaySpec:
 
 
 @dataclass
+class IconSpec:
+    """Override for the ⓘ info-icon placement — the icon analogue of ``overlay``.
+
+    Positioned within the cell like an overlay (align/valign + offset). If no
+    align/valign/offset is given, the theme-default placement for the visual
+    type is kept (``size`` still applies). Handy on slicers so the ⓘ clears the
+    header's clear-selection ("eraser") button.
+    """
+    size: float | None = None
+    align: str | None = None      # left | center | right (default right)
+    valign: str | None = None     # top  | center | bottom (default top)
+    offset_x: float = 0.0
+    offset_y: float = 0.0
+
+
+@dataclass
 class InfoSpec:
     """Documentation block of a visual's config (rendered later as a help modal)."""
     title: str | None = None
@@ -79,6 +95,7 @@ class ColSpec:
     border_weight: float | None = None
     overlay: list[OverlaySpec] = field(default_factory=list)  # visuals stacked on top of this cell
     config: ColConfig | None = None  # presentation config (RESOLVED from the `config:` YAML at parse time)
+    info_icon: "IconSpec | None" = None  # override for the ⓘ placement (like overlay, for the icon)
     props: dict[str, Any] = field(default_factory=dict)
 
 
@@ -117,7 +134,7 @@ class PageSpec:
 
 _KNOWN_COL_KEYS = {
     "span", "name", "component", "visual", "rowspan", "ref",
-    "height", "valign", "border", "border_color", "border_weight", "overlay", "config",
+    "height", "valign", "border", "border_color", "border_weight", "overlay", "config", "info_icon",
 }
 
 
@@ -178,6 +195,20 @@ def _make_overlayspec(raw: dict[str, Any]) -> OverlaySpec:
     )
 
 
+def _make_iconspec(raw: dict[str, Any] | None) -> "IconSpec | None":
+    """Parse a col's ``info_icon`` dict into an IconSpec (None when absent)."""
+    if not raw:
+        return None
+    rs = raw.get("size")
+    return IconSpec(
+        size=float(rs) if rs is not None else None,
+        align=raw.get("align"),
+        valign=raw.get("valign"),
+        offset_x=float(raw.get("offset_x", 0) or 0),
+        offset_y=float(raw.get("offset_y", 0) or 0),
+    )
+
+
 def _resolve_ref(col_raw: dict[str, Any], shared_components: dict[str, dict[str, Any]]) -> dict[str, Any]:
     """Merge a shared component definition with local col overrides.
 
@@ -218,6 +249,7 @@ def _make_colspec(
         border_weight=float(raw_bw) if raw_bw is not None else None,
         overlay=[_make_overlayspec(o) for o in col_raw.get("overlay", [])],
         config=_resolve_config(col_raw.get("config"), base_dir),
+        info_icon=_make_iconspec(col_raw.get("info_icon")),
         props={k: v for k, v in col_raw.items() if k not in _KNOWN_COL_KEYS},
     )
 
