@@ -75,8 +75,8 @@ def _text_lines(text: str, font: int, text_w: float) -> int:
 
 
 def estimate_modal_height(
-    title: str, description: str, footer: str, *,
-    width: float, header_font: int, body_font: int, footer_font: int, padding: int,
+    title: str, description: str, *,
+    width: float, header_font: int, body_font: int, padding: int,
     content_scale: float = 1.25, min_height: float = 90,
 ) -> int:
     """Estimate the modal card height (px) and add a buffer so it never scrolls.
@@ -87,30 +87,27 @@ def estimate_modal_height(
     tooltip, so over-sizing slightly is the safe side.
     """
     title = (title or "").strip()
-    footer = (footer or "").strip()
     text_w = max(40.0, width - 2 * padding - 6)
     body_h = _text_lines(description, body_font, text_w) * body_font * 1.45
     header_h = (_text_lines(title, header_font, text_w) * header_font * 1.35 + 6) if title else 0
-    footer_h = (_text_lines(footer, footer_font, text_w) * footer_font * 1.35 + 8) if footer else 0
-    content = 2 * padding + header_h + body_h + footer_h
+    content = 2 * padding + header_h + body_h
     return int(round(max(min_height, content * content_scale)))
 
 
 def build_info_html(
-    title: str, description: str, footer: str, *,
-    header_font: int = 12, body_font: int = 10, footer_font: int = 9, padding: int = 8,
+    title: str, description: str, *,
+    header_font: int = 12, body_font: int = 10, padding: int = 8,
 ) -> str:
     """Minimalist modal HTML: a plain heading (h3/h4-like) with the description
     right below — no header background, border, shadow or icon.
 
-    The heading renders only when there's a ``title`` and the footer only when
-    there's ``footer`` text; when both are empty only the description shows.
+    The heading (the visual's own title) renders only when there's a ``title``;
+    when it's empty only the description shows. There is no modal footer.
 
     Font sizes (px) and padding are theme-driven (``info_modal`` tokens) so the
     text stays proportional to the tooltip page size.
     """
     title = (title or "").strip()
-    footer = (footer or "").strip()
     heading = (
         f"<div style='font-size:{header_font}px;font-weight:600;color:#212529;"
         f"margin:0 0 6px 0;'>{title}</div>"
@@ -120,29 +117,26 @@ def build_info_html(
         f"<div style='font-size:{body_font}px;line-height:1.45;color:#212529;"
         f"text-align:justify;'>{description}</div>"
     )
-    foot = (
-        f"<div style='font-size:{footer_font}px;color:#6c757d;margin:8px 0 0 0;'>{footer}</div>"
-        if footer else ""
-    )
     return (
         f"<div style='background:#ffffff;padding:{padding}px;"
         "font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'>"
-        f"{heading}{body}{foot}</div>"
+        f"{heading}{body}</div>"
     )
 
 
 def collect_info(layout: LayoutSpec, tokens: dict | None = None) -> list[tuple[str, str, int]]:
     """(visual_name, html, height) for every layout col with a ``config:`` + ``name``.
 
-    The modal title falls back to the visual's ``title`` when ``info.title`` is
-    empty. ``height`` is the estimated tooltip-page height (with the content-scale
-    buffer) so the modal doesn't scroll.
+    The modal title is the visual's own ``title``; the body is ``info`` (a plain
+    description). ``height`` is the estimated tooltip-page height (with the
+    content-scale buffer) so the modal doesn't scroll. Cols without an ``info``
+    description are skipped (no modal to show).
     """
     style = (tokens or {}).get("info_modal", {}) or {}
-    style_kw = {k: style[k] for k in ("header_font", "body_font", "footer_font", "padding") if k in style}
+    style_kw = {k: style[k] for k in ("header_font", "body_font", "padding") if k in style}
     width = float(style.get("width", 230))
     hf = int(style.get("header_font", 12)); bf = int(style.get("body_font", 10))
-    ff = int(style.get("footer_font", 9)); pad = int(style.get("padding", 8))
+    pad = int(style.get("padding", 8))
     scale = float(style.get("content_scale", 1.25)); minh = float(style.get("min_height", 90))
     out: list[tuple[str, str, int]] = []
     seen: set[str] = set()
@@ -151,13 +145,14 @@ def collect_info(layout: LayoutSpec, tokens: dict | None = None) -> list[tuple[s
             for col in row.cols:
                 if not (col.config and col.name) or col.name in seen:
                     continue
-                info = col.config.info
-                title = _norm(info.title) or _norm(col.config.title)
-                desc = _norm(info.description); foot = _norm(info.footer)
-                html = build_info_html(title, desc, foot, **style_kw)
+                desc = _norm(col.config.info)
+                if not desc:
+                    continue
+                title = _norm(col.config.title)
+                html = build_info_html(title, desc, **style_kw)
                 height = estimate_modal_height(
-                    title, desc, foot, width=width, header_font=hf, body_font=bf,
-                    footer_font=ff, padding=pad, content_scale=scale, min_height=minh,
+                    title, desc, width=width, header_font=hf, body_font=bf,
+                    padding=pad, content_scale=scale, min_height=minh,
                 )
                 out.append((col.name, html, height))
                 seen.add(col.name)

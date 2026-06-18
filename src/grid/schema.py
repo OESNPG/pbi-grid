@@ -61,24 +61,17 @@ class IconSpec:
 
 
 @dataclass
-class InfoSpec:
-    """Documentation block of a visual's config (rendered later as a help modal)."""
-    title: str | None = None
-    description: str | None = None   # HTML body
-    footer: str | None = None
-
-
-@dataclass
 class ColConfig:
     """Presentation/config of a visual, parsed from its ``config:`` YAML file.
 
     ``title`` is injected as the visual's header title; ``footer`` is a caption
-    below the visual; ``info`` documents the component for the help modal. All
-    fields are optional (empty = not applied).
+    below the visual; ``info`` is the help-modal body (a plain description — the
+    modal's title is the visual's own ``title``). All fields are optional
+    (empty = not applied).
     """
     title: str | None = None
     footer: str | None = None
-    info: InfoSpec = field(default_factory=InfoSpec)
+    info: str | None = None
 
 
 @dataclass
@@ -157,15 +150,14 @@ def _resolve_config(path_str: str | None, base_dir: Path | None) -> ColConfig | 
     for c in candidates:
         if c.exists():
             raw = yaml.safe_load(c.read_text(encoding="utf-8")) or {}
-            info_raw = raw.get("info") or {}
+            info_raw = raw.get("info")
+            # ``info`` is a plain description string; tolerate the legacy mapping
+            # form ({title, description, footer}) by taking its description.
+            info = info_raw.get("description") if isinstance(info_raw, dict) else info_raw
             return ColConfig(
                 title=_clean(raw.get("title")),
                 footer=_clean(raw.get("footer")),
-                info=InfoSpec(
-                    title=_clean(info_raw.get("title")),
-                    description=_clean(info_raw.get("description")),
-                    footer=_clean(info_raw.get("footer")),
-                ),
+                info=_clean(info),
             )
     print(f"  WARNING: config file not found for '{path_str}' (tried: {', '.join(str(c) for c in candidates)})")
     return None

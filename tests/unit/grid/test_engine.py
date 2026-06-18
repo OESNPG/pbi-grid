@@ -1,7 +1,7 @@
 import pytest
 
 from src.grid.engine import _find_next_x, _rowspan_height, _build_page, _apply_shared
-from src.grid.schema import Canvas, ColSpec, RowSpec, PageSpec, SharedRowSpec, OverlaySpec, ColConfig, InfoSpec
+from src.grid.schema import Canvas, ColSpec, RowSpec, PageSpec, SharedRowSpec, OverlaySpec, ColConfig
 from src.models import Visual, Position
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -513,7 +513,7 @@ class TestTitleInjection:
         assert all(v.visual_type != "textbox" for v in result.visuals)
 
     def test_config_sem_title_nao_injeta(self):
-        col = _col(12, name="c", config=ColConfig(info=InfoSpec(description="<b>html</b>")))
+        col = _col(12, name="c", config=ColConfig(info="<b>html</b>"))
         page = _page([_row("r0", 100, [col])])
         result = _build_page(page, self._CANVAS, _pmap(page), source_visuals={"c": self._src()})
         assert "visualContainerObjects" not in result.visuals[0].raw_data["visual"]

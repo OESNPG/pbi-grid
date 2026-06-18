@@ -280,8 +280,9 @@ def _render_col(
     if col.config and not col.component and visuals:
         if col.config.title:
             _apply_title(visuals[0], col.config.title, visuals[0].visual_type)   # header title (or card label)
-        if col.name:
+        if col.name and col.config.info:
             # ⓘ trigger card → hidden tooltip page with the component's info modal
+            # (only when there's an info description to show)
             visuals.append(_make_info_icon_card(cell, col.name, cell.z + 700, tokens, visuals[0].visual_type, icon=col.info_icon))
 
     for i, ov in enumerate(col.overlay):

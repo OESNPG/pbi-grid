@@ -1,5 +1,5 @@
 from src.grid.schema import (
-    Canvas, ColConfig, ColSpec, InfoSpec, LayoutSpec, PageSpec, RowSpec,
+    Canvas, ColConfig, ColSpec, LayoutSpec, PageSpec, RowSpec,
 )
 from src.grid.info_table import (
     ICON_MEASURE, TABLE_NAME, build_config_tmdl, build_info_html, collect_info,
@@ -15,47 +15,41 @@ def _layout(cols: list[ColSpec]) -> LayoutSpec:
 
 
 class TestBuildInfoHtml:
-    def test_inclui_titulo_descricao_rodape(self):
-        html = build_info_html("Titulo", "Corpo da descricao", "Rodape")
-        assert "Titulo" in html and "Corpo da descricao" in html and "Rodape" in html
+    def test_inclui_titulo_e_descricao(self):
+        html = build_info_html("Titulo", "Corpo da descricao")
+        assert "Titulo" in html and "Corpo da descricao" in html
         assert html.startswith("<div") and html.rstrip().endswith("</div>")
         # layout minimalista: título em negrito, sem header colorido/borda/ícone
         assert "font-weight:600" in html
         assert "#E6E6E6" not in html and "border:1px" not in html
         assert "box-shadow" not in html and "&#8505;" not in html
 
-    def test_sem_titulo_e_rodape_colapsa_para_corpo(self):
-        html = build_info_html("", "Somente a descricao", "")
+    def test_sem_titulo_so_descricao(self):
+        html = build_info_html("", "Somente a descricao")
         assert "Somente a descricao" in html
-        # sem heading (sem negrito) e sem rodapé
-        assert "font-weight:600" not in html
-        assert "#E6E6E6" not in html and "&#8505;" not in html
-
-    def test_apenas_titulo_vazio_mantem_rodape(self):
-        html = build_info_html("", "Corpo", "Rodape")
-        assert "Rodape" in html and "Corpo" in html
         assert "font-weight:600" not in html  # sem título => sem heading
 
 
 class TestCollectInfo:
-    def test_uma_entrada_por_col_com_config(self):
+    def test_so_entra_col_com_info(self):
         cols = [
-            ColSpec(span=6, name="v1", config=ColConfig(info=InfoSpec(title="A", description="da"))),
-            ColSpec(span=6, name="v2", config=ColConfig(title="T2")),  # info.title vazio -> usa title
+            ColSpec(span=6, name="v1", config=ColConfig(title="Titulo V1", info="descricao um")),
+            ColSpec(span=6, name="v2", config=ColConfig(title="T2")),  # sem info -> ignorado
             ColSpec(span=6, name="v3"),  # sem config -> ignorado
         ]
         items = collect_info(_layout(cols))
-        names = [t[0] for t in items]
-        assert names == ["v1", "v2"]
-        htmls = {t[0]: t[1] for t in items}
-        heights = {t[0]: t[2] for t in items}
-        # fallback do título do modal: info.title ou title do visual
-        assert "A" in htmls["v1"]
-        assert "T2" in htmls["v2"]
-        assert all(h > 0 for h in heights.values())  # altura estimada presente
+        assert [t[0] for t in items] == ["v1"]
+        html = {t[0]: t[1] for t in items}["v1"]
+        # título do modal = título do visual; corpo = info
+        assert "Titulo V1" in html and "descricao um" in html
+        assert all(t[2] > 0 for t in items)  # altura estimada presente
 
     def test_ignora_col_sem_name(self):
-        cols = [ColSpec(span=12, config=ColConfig(title="x"))]
+        cols = [ColSpec(span=12, config=ColConfig(title="x", info="y"))]
+        assert collect_info(_layout(cols)) == []
+
+    def test_ignora_col_sem_info(self):
+        cols = [ColSpec(span=6, name="v1", config=ColConfig(title="só título"))]
         assert collect_info(_layout(cols)) == []
 
 

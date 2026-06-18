@@ -63,9 +63,7 @@ class TestMakeColspec:
         col = _make_colspec({"span": 6, "name": "v1", "config": "c.yaml"}, {}, base_dir=tmp_path)
         assert col.config.title == "Titulados"
         assert col.config.footer == "Fonte CAPES"
-        assert col.config.info.title == "Sobre"
-        assert col.config.info.description == "<b>html</b>"
-        assert col.config.info.footer == "rodapé"
+        assert col.config.info == "<b>html</b>"
         assert "config" not in col.props
 
     def test_make_colspec_config_tries_yaml_extension(self, tmp_path):
@@ -79,7 +77,7 @@ class TestMakeColspec:
         col = _make_colspec({"span": 6, "config": "c.yaml"}, {}, base_dir=tmp_path)
         assert col.config.title == "T"
         assert col.config.footer is None
-        assert col.config.info.title is None
+        assert col.config.info is None
 
     def test_make_colspec_config_missing_is_none(self, tmp_path, capsys):
         col = _make_colspec({"span": 6, "config": "nao_existe"}, {}, base_dir=tmp_path)
