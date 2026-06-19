@@ -15,19 +15,14 @@ def _layout(cols: list[ColSpec]) -> LayoutSpec:
 
 
 class TestBuildInfoHtml:
-    def test_inclui_titulo_e_descricao(self):
-        html = build_info_html("Titulo", "Corpo da descricao")
-        assert "Titulo" in html and "Corpo da descricao" in html
+    def test_so_descricao_sem_titulo(self):
+        html = build_info_html("Somente a descricao")
+        assert "Somente a descricao" in html
         assert html.startswith("<div") and html.rstrip().endswith("</div>")
-        # layout minimalista: título em negrito, sem header colorido/borda/ícone
-        assert "font-weight:600" in html
+        # minimalista: sem título/heading, sem header colorido/borda/sombra/ícone
+        assert "font-weight:600" not in html
         assert "#E6E6E6" not in html and "border:1px" not in html
         assert "box-shadow" not in html and "&#8505;" not in html
-
-    def test_sem_titulo_so_descricao(self):
-        html = build_info_html("", "Somente a descricao")
-        assert "Somente a descricao" in html
-        assert "font-weight:600" not in html  # sem título => sem heading
 
 
 class TestCollectInfo:
@@ -40,8 +35,8 @@ class TestCollectInfo:
         items = collect_info(_layout(cols))
         assert [t[0] for t in items] == ["v1"]
         html = {t[0]: t[1] for t in items}["v1"]
-        # título do modal = título do visual; corpo = info
-        assert "Titulo V1" in html and "descricao um" in html
+        # modal mostra só a description (info); o title do visual não entra
+        assert "descricao um" in html and "Titulo V1" not in html
         assert all(t[2] > 0 for t in items)  # altura estimada presente
 
     def test_ignora_col_sem_name(self):
