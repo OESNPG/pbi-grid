@@ -539,6 +539,8 @@ palette:
       '*':
         '*':
         - wordWrap: true
+        visualHeader:
+        - showFilterRestatementButton: false
         line:
         - transparency: 0
         outline:
