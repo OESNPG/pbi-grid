@@ -14,7 +14,7 @@ typography:
 info_modal:        # página-tooltip do modal
   width: 230          # largura (px) — controla a quebra de linha do texto
   min_height: 90      # altura mínima (px)
-  content_scale: 1.25 # janela = altura estimada do conteúdo × isto (folga p/ não rolar)
+  content_scale: 1.5  # janela = altura estimada do conteúdo × isto (folga p/ não rolar)
   background: "#FFFFFF" # fundo da página-tooltip (remove a moldura/borda cinza)
   header_font: 12     # fonte do título do card (px)
   body_font: 10       # fonte do corpo/descrição (px)
