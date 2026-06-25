@@ -685,7 +685,7 @@ palette:
               color: '#E6E6E6'
           fontFamily: "'Segoe UI Bold', wf_segoe-ui_bold, helvetica, arial, sans-serif"
           fontSize: 11
-          wordWrap: false
+          wordWrap: true
           outlineStyle: 4
         rowHeaders:
         - showExpandCollapseButtons: true
@@ -763,7 +763,7 @@ palette:
               color: '#E6E6E6'
           fontFamily: "'Segoe UI Bold', wf_segoe-ui_bold, helvetica, arial, sans-serif"
           fontSize: 11
-          wordWrap: false
+          wordWrap: true
           outlineStyle: 4
         values:
         - fontColorPrimary:
