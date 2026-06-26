@@ -17,6 +17,28 @@ It also includes an extensible design-token-based theming system, including a re
 
 ---
 
+## In production: CAPES — Agenda Nacional
+
+PBI Grid powers the **Agenda Nacional de Capacidades (Capacity)** dashboard published by CAPES (Brazilian Federal Agency for Support and Evaluation of Graduate Education), launched in June 2026.
+
+- 🌐 **Live dashboard:** [agendanacional.capes.gov.br/capacity](https://agendanacional.capes.gov.br/capacity)
+- 🎥 **Launch video:** [youtube.com/watch?v=_Y6lg1ShRow](https://www.youtube.com/watch?v=_Y6lg1ShRow)
+
+The CAPES report was generated with PBI Grid applying the govBR design package, demonstrating the tool in a real public-sector deployment.
+
+---
+
+## Publications
+
+> 📄 **Paper:** *PBI Grid: A Dashboard as Code Tool for Enhancing Maintainability and GovBR Compliance in Power BI Reports* — manuscript submitted to the Brazilian Symposium on Software Engineering (SBES) 2026, under review.
+
+| Resource | Link |
+|---|---|
+| 🎬 Demo video | [youtu.be/3WtDYCx9z-k](https://youtu.be/3WtDYCx9z-k) |
+| 📦 Archived release (Zenodo DOI) | [10.5281/zenodo.20382780](https://doi.org/10.5281/zenodo.20382780) |
+
+---
+
 ## Requirements
 
 - Python 3.11+
