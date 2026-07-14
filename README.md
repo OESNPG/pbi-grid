@@ -22,7 +22,6 @@ It also includes an extensible design-token-based theming system, including a re
 PBI Grid powers the **Agenda Nacional de Capacidades (Capacity)** dashboard published by CAPES (Brazilian Federal Agency for Support and Evaluation of Graduate Education), launched in June 2026.
 
 - 🌐 **Live dashboard:** [agendanacional.capes.gov.br/capacity](https://agendanacional.capes.gov.br/capacity)
-- 🎥 **Launch video:** [youtube.com/watch?v=_Y6lg1ShRow](https://www.youtube.com/watch?v=_Y6lg1ShRow)
 
 The CAPES report was generated with PBI Grid applying the govBR design package, demonstrating the tool in a real public-sector deployment.
 
@@ -30,10 +29,11 @@ The CAPES report was generated with PBI Grid applying the govBR design package, 
 
 ## Publications
 
-> 📄 **Paper:** *PBI Grid: A Dashboard as Code Tool for Enhancing Maintainability and GovBR Compliance in Power BI Reports* — manuscript submitted to the Brazilian Symposium on Software Engineering (SBES) 2026, under review.
+> 📄 **Paper:** *PBI Grid: A Dashboard as Code Tool for Enhancing Maintainability and GovBR Compliance in Power BI Reports* — accepted at the Brazilian Symposium on Software Engineering (SBES) 2026, Tools Track.
 
 | Resource | Link |
 |---|---|
+| 📄 Paper (PDF) | [paper.pdf](paper.pdf) |
 | 🎬 Demo video | [youtu.be/3WtDYCx9z-k](https://youtu.be/3WtDYCx9z-k) |
 | 📦 Archived release (Zenodo DOI) | [10.5281/zenodo.20382780](https://doi.org/10.5281/zenodo.20382780) |
 
@@ -41,12 +41,25 @@ The CAPES report was generated with PBI Grid applying the govBR design package, 
 
 ## Requirements
 
+**Software**
+
 - Python 3.11+
-- [PyYAML](https://pypi.org/project/PyYAML/)
+- [PyYAML](https://pypi.org/project/PyYAML/) `>=6.0` (installed automatically via `pip install -e .`; declared in `pyproject.toml`)
+- Development/testing extras (optional): `pytest>=8.0`, `pytest-cov>=5.0` (`pip install -e ".[dev]"`)
+
+**Operating system**
+
+- Cross-platform: Windows, macOS, and Linux. No OS-specific dependencies. The command examples in this README use PowerShell syntax; the equivalent shell/bash commands work on macOS and Linux.
+
+**Hardware**
+
+- No special hardware requirements. Any machine able to run Python 3.11+ is sufficient; the tool performs lightweight file I/O and in-memory layout computation, with no GPU, large-memory, or specialized-peripheral needs.
+
+> To open and render the generated `.Report` output, Power BI Desktop (Windows) is required — but this is only needed to view results, not to run PBI Grid itself.
 
 ---
 
-## Setup
+## Installation
 
 ```bash
 git clone <repo-url>
@@ -69,9 +82,50 @@ pbi-grid --help
 
 ---
 
+## Quick start — generate from a bundled example
+
+The fastest way to see the tool working: generate a complete report from one of the
+ready-made layout specifications shipped in `examples/countries_population/`. No layout
+authoring required — both files already declare `report.source`, so the visual data
+bindings, filters, and formatting are pulled from the bundled source report automatically.
+
+```powershell
+# default theme
+pbi-grid generate `
+  --layout examples/countries_population/pbi_grid_default_theme_layout.yaml `
+  --output output/countries_population_default
+
+# govBR theme
+pbi-grid generate `
+  --layout examples/countries_population/pbi_grid_govbr_theme_layout.yaml `
+  --output output/countries_population_govbr
+```
+
+> **macOS / Linux:** replace the trailing backtick `` ` `` line continuations with `\`.
+
+**Expected result.** Each command prints the path of the generated report and writes a
+`countries_population.pbip` project file alongside its `countries_population.Report/` folder
+under the chosen `--output` directory:
+
+```
+output/countries_population_govbr/
+├── countries_population.pbip        # ← open this in Power BI Desktop
+└── countries_population.Report/
+    ├── definition/                  # pages/, report.json, ...
+    └── ...
+```
+
+**Double-click `countries_population.pbip`** to open the report in Power BI Desktop. The govBR run applies the GovBR header, sidebar menu, chart palette, and footer; the default run uses the neutral
+theme. This reproduces the artifact evaluated in the paper.
+
+---
+
 ## Typical workflow
 
-The example below uses the included `examples/countries_population` report. The same steps apply to any PBIR report.
+The steps below show how to build a layout **from scratch** against an existing report
+(extract → scaffold → generate). If you only want to reproduce the bundled example, use the
+[Quick start](#quick-start--generate-from-a-bundled-example) above instead. The example uses
+the included `examples/countries_population` report; the same steps apply to any PBIR report.
 
 ### 1 — Extract a layout from an existing report
 
