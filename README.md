@@ -35,7 +35,7 @@ The CAPES report was generated with PBI Grid applying the govBR design package, 
 |---|---|
 | 📄 Paper (PDF) | [paper.pdf](paper.pdf) |
 | 🎬 Demo video | [youtu.be/3WtDYCx9z-k](https://youtu.be/3WtDYCx9z-k) |
-| 📦 Archived release (Zenodo DOI) | [10.5281/zenodo.20382780](https://doi.org/10.5281/zenodo.20382780) |
+| 📦 Archived release (Zenodo DOI) | [10.5281/zenodo.21462034](https://doi.org/10.5281/zenodo.21462034) |
 
 ---
 
