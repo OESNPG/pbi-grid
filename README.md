@@ -33,9 +33,9 @@ The CAPES report was generated with PBI Grid applying the govBR design package, 
 
 | Resource | Link |
 |---|---|
-| 📄 Paper (PDF) | [paper.pdf](paper.pdf) |
+| 📄 Paper (PDF) | [PBI Grid — SBES 2026 Tools Track](PBI_Grid__A_Dashboard_as_Code_Tool_for_Enhancing_Maintainability_and_GovBR_Compliance_in_Power_BI_Reports.pdf) |
 | 🎬 Demo video | [youtu.be/3WtDYCx9z-k](https://youtu.be/3WtDYCx9z-k) |
-| 📦 Archived release (Zenodo DOI) | [10.5281/zenodo.21462034](https://doi.org/10.5281/zenodo.21462034) |
+| 📦 Archived release (Zenodo DOI) | [10.5281/zenodo.22135423](https://doi.org/10.5281/zenodo.22135423) |
 
 ---
 
@@ -44,7 +44,7 @@ The CAPES report was generated with PBI Grid applying the govBR design package, 
 **Software**
 
 - Python 3.11+
-- [PyYAML](https://pypi.org/project/PyYAML/) `>=6.0` (installed automatically via `pip install -e .`; declared in `pyproject.toml`)
+- [PyYAML](https://pypi.org/project/PyYAML/) `>=6.0` (installed automatically via `pip install -e .`; declared in `pyproject.toml`, and pinned to the validated version in `requirements.txt`)
 - Development/testing extras (optional): `pytest>=8.0`, `pytest-cov>=5.0` (`pip install -e ".[dev]"`)
 
 **Operating system**
@@ -55,15 +55,18 @@ The CAPES report was generated with PBI Grid applying the govBR design package, 
 
 - No special hardware requirements. Any machine able to run Python 3.11+ is sufficient; the tool performs lightweight file I/O and in-memory layout computation, with no GPU, large-memory, or specialized-peripheral needs.
 
-> To open and render the generated `.Report` output, Power BI Desktop (Windows) is required — but this is only needed to view results, not to run PBI Grid itself.
+> To open and render the generated `.Report` output, Power BI Desktop (Windows) is required — but this is only needed to view results, not to run PBI Grid itself. The generated reports were validated with Power BI Desktop **2.155.756.0** (June 2026).
 
 ---
 
 ## Installation
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/OESNPG/pbi-grid.git
 cd pbi-grid
+
+# Check your Python version 3.11 or newer is required
+python3 --version
 
 # Create virtual env
 python3 -m venv .venv
@@ -72,6 +75,9 @@ python3 -m venv .venv
 source .venv/bin/activate
 # Activate (Windows)
 .venv\Scripts\activate
+
+# Upgrade pip inside the venv
+python -m pip install --upgrade pip
 
 # Install
 pip install -e .
@@ -117,6 +123,8 @@ output/countries_population_govbr/
 
 **Double-click `countries_population.pbip`** to open the report in Power BI Desktop. The govBR run applies the GovBR header, sidebar menu, chart palette, and footer; the default run uses the neutral
 theme. This reproduces the artifact evaluated in the paper.
+
+**First open.** Power BI Desktop may show some visuals without data until the semantic model is loaded. Click **Refresh now** in the notification bar to populate them, an empty first render is expected, not a failure.
 
 ---
 
@@ -526,35 +534,80 @@ Runs `validate_layout` (height and span checks) and writes the updated YAML back
 
 ```
 pbi-grid/
-├── src/
-│   ├── models/            # PBIR domain models (Visual, Page, Report)
+├── src/                          # Tool implementation, installed as the `pbi-grid` command
+│   ├── cli.py                    # CLI entry point — parses arguments, dispatches commands
 │   ├── grid/
-│   │   ├── schema.py      # YAML parser → LayoutSpec
-│   │   ├── engine.py      # LayoutSpec → Report model
-│   │   ├── extractor.py   # .Report folder → layout YAML
-│   │   ├── scaffold.py    # Interactive component wizard
-│   │   └── renderer.py    # Report model → PBIR files on disk
-│   ├── components/
-│   │   ├── header.py      # HeaderComponent
-│   │   ├── menu.py        # MenuComponent
-│   │   └── footer.py      # FooterComponent
-│   ├── packages.py        # Theme loader (tokens + assets)
-│   └── cli.py             # CLI entry point
-├── themes/
-│   ├── default/           # Neutral theme (tokens, visual_defaults, imgs)
-│   └── govbr/             # GovBR theme (tokens, visual_defaults, imgs)
+│   │   ├── schema.py             # YAML parser → LayoutSpec
+│   │   ├── engine.py             # LayoutSpec → Report model (grid resolution)
+│   │   ├── renderer.py           # Report model → PBIR files on disk
+│   │   ├── extractor.py          # .Report folder → layout YAML (inverse pipeline)
+│   │   └── scaffold.py           # Interactive component wizard
+│   ├── models/                   # PBIR domain models (Position, Visual, Page, Report)
+│   ├── components/               # Header, menu and footer renderers (one module each)
+│   ├── packages.py               # Theme loader (tokens + assets)
+│   └── pbir_utils.py             # PBIR primitives (deterministic IDs, literals, colors)
+├── themes/                       # Design packages, selected via `package:` in the layout YAML
+│   ├── default/                  # Neutral theme
+│   └── govbr/                    # GovBR theme
+│       ├── tokens.yaml           # Design tokens (colors, sizes, font sizes per component)
+│       ├── visual_defaults.yaml  # Defaults applied by scaffold per visual type
+│       ├── layouts/              # Starter layout YAMLs to copy into a new project
+│       ├── imgs/ , icons/        # Logos and menu icons
+│       └── preview.PNG
 ├── examples/
-│   └── countries_population/
-│       ├── source/        # Original .Report (SemanticModel + Report)
+│   └── countries_population/     # Bundled, self-contained reproducible example
+│       ├── source/               # Original .Report + .SemanticModel
 │       ├── pbi_grid_default_theme_layout.yaml
 │       └── pbi_grid_govbr_theme_layout.yaml
 ├── tests/
-│   ├── unit/              # Synthetic-fixture tests (engine, schema, extractor, components)
-│   └── integration/       # Golden-file tests against examples/countries_population
-├── util/
-│   └── update-golden.ps1  # Sync tests/golden/ after a validated generate run
-└── pyproject.toml
+│   ├── unit/                     # Synthetic-fixture tests (engine, schema, extractor, components)
+│   ├── integration/              # Golden-file tests against examples/countries_population
+│   └── golden/                   # Expected PBIR output, one tree per theme
+├── util/                         # Maintenance scripts (not required to run the tool)
+├── requirements.txt              # Runtime dependency, pinned to the validated version
+├── pyproject.toml                # Package metadata, dependencies, pytest configuration
+├── LICENSE                       # MIT
+├── README.md
+└── PBI_Grid__A_Dashboard_as_Code_Tool_for_Enhancing_Maintainability_and_GovBR_Compliance_in_Power_BI_Reports.pdf
+                                  # PDF copy of the accepted paper
 ```
+
+### How it fits together
+
+Everything needed to install, run and verify the tool sits at the repository root; there are no
+nested project folders. `src/` holds the implementation, and `pip install -e .` registers the
+`pbi-grid` command pointing at `src/cli.py`.
+
+The core of `src/` is a pipeline that runs in **two directions**, which is what makes the
+round-trip workflow possible. Going forward — the `generate` command — `schema.py` parses the
+layout YAML into a `LayoutSpec`, `engine.py` resolves rows and column spans into absolute PBIR
+coordinates and produces a `Report` model, and `renderer.py` serializes that model into the
+`.Report` folder on disk. Going backward — the `extract` command — `extractor.py` reads an
+existing `.Report`, clusters visuals by position to recover row bands, infers spans from widths,
+and emits a layout YAML. `scaffold.py` stands beside both as an interactive editor that adds
+components to an existing layout YAML.
+
+The remaining modules support that pipeline. `models/` holds the domain objects passed between
+stages, so no stage manipulates raw JSON. `components/` turns a `component:` declaration into the
+group of PBIR visuals that render a header, menu or footer. `packages.py` loads a theme from
+`themes/`, and `pbir_utils.py` holds the low-level PBIR primitives, including the deterministic
+identifier generation that makes repeated runs byte-identical.
+
+`themes/` contains one directory per design package. A package supplies design tokens, the visual
+defaults that `scaffold` applies, and its image assets; `layouts/` inside a package holds starter
+specifications meant to be copied, not read by the tool.
+
+`examples/countries_population/` is self-contained: it ships the original `.Report` and its
+semantic model alongside the two layout specifications, so a report can be regenerated from a
+clean clone with no external data source. It is the example used throughout this README and the
+basis of the measurements reported in the paper.
+
+`tests/` is split by what it touches. `unit/` runs against synthetic fixtures and never reads the
+filesystem; `integration/` regenerates the bundled example and compares the result against
+`golden/`, which stores the expected PBIR output file by file. That comparison is what makes the
+determinism claim verifiable — a change that alters generated output fails the suite. `util/`
+holds maintenance scripts used when developing the tool, including the one that refreshes
+`golden/` after an intentional change; none of it is needed to install or run `pbi-grid`.
 
 ### Running tests
 
