@@ -1,6 +1,6 @@
 report:
   name: countries_population
-  source: source\countries_population.Report
+  source: source/countries_population.Report
 canvas:
   width: 1280
   height: 720

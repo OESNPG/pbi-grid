@@ -208,7 +208,9 @@ def extract(
         output = merge_with if merge_with else report_path.parent / f"{report.name}_layout.yaml"
 
     import os
-    source_rel = os.path.relpath(report_path.resolve(), output.parent.resolve())
+    # Emit forward slashes so a layout extracted on Windows still resolves on
+    # macOS/Linux, where a backslash is a literal filename character.
+    source_rel = Path(os.path.relpath(report_path.resolve(), output.parent.resolve())).as_posix()
 
     _MANAGED_KEYS = {"report", "canvas", "pages"}
     layout: dict[str, Any] = {

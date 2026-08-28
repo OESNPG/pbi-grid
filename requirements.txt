@@ -1,0 +1,15 @@
+# Runtime dependency, mirroring the declaration in pyproject.toml.
+# Pinned to the exact version used to validate this artifact.
+#
+# The recommended installation is `pip install -e .` (see README, Installation),
+# which reads pyproject.toml and also registers the `pbi-grid` command.
+# This file is provided for environments that install dependencies directly:
+#
+#     pip install -r requirements.txt
+
+PyYAML==6.0.3
+
+# Optional — only needed to run the test suite (`pip install -e ".[dev]"`):
+#
+#     pytest==9.1.1
+#     pytest-cov==7.1.0
