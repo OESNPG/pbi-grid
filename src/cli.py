@@ -16,6 +16,12 @@ def _cmd_generate(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     layout = LayoutSpec.from_yaml(layout_path)
+
+    if layout.source_report_path and not layout.source_report_path.exists():
+        print(f"Warning: report.source not found: {layout.source_report_path}", file=sys.stderr)
+        print("         Generating without source data — visuals will have no data "
+              "bindings and no .SemanticModel will be copied.", file=sys.stderr)
+
     report = build(layout, debug=args.debug)
 
     output = Path(args.output) if args.output else layout_path.parent

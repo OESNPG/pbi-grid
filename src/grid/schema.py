@@ -188,7 +188,9 @@ class LayoutSpec:
         report_raw = data.get("report", {})
         source_report_path: Path | None = None
         if source_raw := report_raw.get("source"):
-            source_report_path = (path.parent / source_raw).resolve()
+            # Layouts extracted on Windows carry backslash separators; normalize
+            # so the same YAML resolves on macOS/Linux.
+            source_report_path = (path.parent / str(source_raw).replace("\\", "/")).resolve()
 
         return cls(
             report_name=report_raw.get("name", path.stem),
