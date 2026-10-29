@@ -131,18 +131,23 @@ def collect_info(layout: LayoutSpec, tokens: dict | None = None) -> list[tuple[s
     for page in layout.pages:
         for row in page.rows:
             for col in row.cols:
-                if not (col.config and col.name) or col.name in seen:
-                    continue
-                desc = _norm(col.config.info)
-                if not desc:
-                    continue
-                html = build_info_html(desc, **style_kw)
-                height = estimate_modal_height(
-                    desc, width=width, body_font=bf,
-                    padding=pad, content_scale=scale, min_height=minh,
-                )
-                out.append((col.name, html, height))
-                seen.add(col.name)
+                # a coluna e as áreas info_only das suas sobreposições
+                cands = [(col.name, col.config)] + [
+                    (ov.name, ov.config) for ov in col.overlay if getattr(ov, "info_only", False)
+                ]
+                for name, cfg in cands:
+                    if not (cfg and name) or name in seen:
+                        continue
+                    desc = _norm(cfg.info)
+                    if not desc:
+                        continue
+                    html = build_info_html(desc, **style_kw)
+                    height = estimate_modal_height(
+                        desc, width=width, body_font=bf,
+                        padding=pad, content_scale=scale, min_height=minh,
+                    )
+                    out.append((name, html, height))
+                    seen.add(name)
     return out
 
 

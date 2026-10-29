@@ -33,12 +33,21 @@ def _copy_project(source_dir: Path, dest_dir: Path) -> None:
             shutil.copy2(item, dest)
 
 
-def render(report: Report, output: Path, source_report_path: Path | None = None) -> Path:
+def render(
+    report: Report,
+    output: Path,
+    source_report_path: Path | None = None,
+    preserve_config_table: bool = False,
+) -> Path:
     """Serialize report to PBIR folder structure.
 
     When *source_report_path* is provided and points to a different location than
     *output*, the entire source project directory is copied to *output* first, then
     the layout changes are applied on top (positions overwritten, all other data preserved).
+
+    When *preserve_config_table* is True and the target SemanticModel already has a
+    ``pbi_grid_config.tmdl``, it is left untouched (the generated info-modal table is
+    NOT written over it). Use when the source project maintains its own config table.
 
     Returns the path to the generated .Report directory.
     """
@@ -56,13 +65,23 @@ def render(report: Report, output: Path, source_report_path: Path | None = None)
 
     report.to_pbir(report_dir)
 
-    if report.config_table_tmdl:
+    if report.config_table_tmdl and not (
+        preserve_config_table and _config_table_exists(report, project_dir)
+    ):
         _write_config_table(report, project_dir)
 
     if not (project_dir / f"{report.name}.pbip").exists():
         _write_pbip(report, project_dir)
 
     return report_dir
+
+
+def _config_table_exists(report: Report, project_dir: Path) -> bool:
+    """True when the target SemanticModel already ships a pbi_grid_config.tmdl."""
+    from .info_table import TABLE_NAME
+    return (
+        project_dir / f"{report.name}.SemanticModel" / "definition" / "tables" / f"{TABLE_NAME}.tmdl"
+    ).exists()
 
 
 def _write_config_table(report: Report, project_dir: Path) -> None:

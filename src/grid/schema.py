@@ -42,6 +42,11 @@ class OverlaySpec:
     offset_x: float = 0.0         # px nudge after alignment (can be negative)
     offset_y: float = 0.0         # px nudge after alignment (e.g. push the card down
                                   # past a donut's title/legend at the top)
+    # info_only: não emite visual, só o ícone ⓘ desta área (ex.: um indicador dentro de um card
+    # com vários campos). ``name`` é um id estável (vira info_<name>, página e ícone determinísticos).
+    info_only: bool = False
+    config: "ColConfig | None" = None
+    info_icon: "IconSpec | None" = None
 
 
 @dataclass
@@ -87,6 +92,9 @@ class ColSpec:
     border_color: str | None = None
     border_weight: float | None = None
     overlay: list[OverlaySpec] = field(default_factory=list)  # visuals stacked on top of this cell
+    overlay_only: bool = False    # emit NO base visual for this cell — only its overlays (a pure anchor)
+    backdrop: bool = False        # rowspan sem bloquear: a célula fica ATRÁS das linhas seguintes (moldura de painel)
+    border_radius: int | None = None  # canto arredondado da borda desta célula (px); default = token layout.border_radius
     config: ColConfig | None = None  # presentation config (RESOLVED from the `config:` YAML at parse time)
     info_icon: "IconSpec | None" = None  # override for the ⓘ placement (like overlay, for the icon)
     props: dict[str, Any] = field(default_factory=dict)
@@ -127,7 +135,8 @@ class PageSpec:
 
 _KNOWN_COL_KEYS = {
     "span", "name", "component", "visual", "rowspan", "ref",
-    "height", "valign", "border", "border_color", "border_weight", "overlay", "config", "info_icon",
+    "height", "valign", "border", "border_color", "border_weight", "overlay", "overlay_only", "config", "info_icon",
+    "backdrop", "border_radius",
 }
 
 
@@ -171,7 +180,7 @@ def _clean(value: Any) -> str | None:
     return s or None
 
 
-def _make_overlayspec(raw: dict[str, Any]) -> OverlaySpec:
+def _make_overlayspec(raw: dict[str, Any], base_dir: Path | None = None) -> OverlaySpec:
     """Parse one overlay dict into an OverlaySpec."""
     rw = raw.get("width")
     rh = raw.get("height")
@@ -184,6 +193,9 @@ def _make_overlayspec(raw: dict[str, Any]) -> OverlaySpec:
         valign=raw.get("valign", "center"),
         offset_x=float(raw.get("offset_x", 0) or 0),
         offset_y=float(raw.get("offset_y", 0) or 0),
+        info_only=bool(raw.get("info_only", False)),
+        config=_resolve_config(raw.get("config"), base_dir),
+        info_icon=_make_iconspec(raw.get("info_icon")),
     )
 
 
@@ -239,7 +251,10 @@ def _make_colspec(
         border=bool(col_raw.get("border", False)),
         border_color=col_raw.get("border_color") or None,
         border_weight=float(raw_bw) if raw_bw is not None else None,
-        overlay=[_make_overlayspec(o) for o in col_raw.get("overlay", [])],
+        overlay=[_make_overlayspec(o, base_dir) for o in col_raw.get("overlay", [])],
+        overlay_only=bool(col_raw.get("overlay_only", False)),
+        backdrop=bool(col_raw.get("backdrop", False)),
+        border_radius=int(col_raw["border_radius"]) if col_raw.get("border_radius") is not None else None,
         config=_resolve_config(col_raw.get("config"), base_dir),
         info_icon=_make_iconspec(col_raw.get("info_icon")),
         props={k: v for k, v in col_raw.items() if k not in _KNOWN_COL_KEYS},
@@ -278,6 +293,25 @@ class LayoutSpec:
     shared_rows: list[SharedRowSpec] = field(default_factory=list)
     source_path: Path | None = None          # layout YAML path
     source_report_path: Path | None = None   # existing .Report to pull visual data from
+    # ── options (todas opt-in; default = comportamento antigo) ─────────────────
+    keep_unlisted_visuals: bool = False   # carrega visuais do source que o layout NAO posicionou,
+                                          # na posicao ORIGINAL deles (reconciliacao sem perdas nativa)
+    keep_unlisted_pages: bool = False     # preserva paginas do source ausentes no layout (ex.: tooltips)
+    prune_interactions: bool = False      # remove visualInteractions penduradas (origem/destino ausente)
+    fit_page_height: bool = False         # ajusta a altura de cada pagina p/ caber o conteudo
+    fit_page_margin: int = 24             # margem usada pelo fit_page_height
+    uniform_page_height: int = 0          # fixa TODAS as paginas nesta altura; conteudo que passar
+                                          # e comprimido verticalmente p/ caber (sem cortar). 0 = off.
+    uniform_scale_protect: set = field(default_factory=lambda: {
+        "slicer", "textbox", "actionButton", "image", "cardVisual", "pageNavigator", "shape"
+    })                                    # tipos "chrome" (filtros/rotulos/cards/botoes): usados p/ achar
+                                          # o topo do conteudo. A faixa acima do 1o visual de conteudo NAO
+                                          # e escalada pelo uniform_page_height (filtros ficam intactos)
+    normalize_slicer_height: float = 0     # se >0, uniformiza a altura dos slicers pequenos (filtros
+                                           # dropdown) neste valor. Slicers grandes (listas) sao mantidos.
+    normalize_slicer_max: float = 120      # so normaliza slicers com altura ATUAL abaixo deste limite
+                                           # (protege filtros-lista altos)
+    preserve_config_table: bool = False   # nao sobrescreve pbi_grid_config.tmdl se ele ja existir
 
     @classmethod
     def from_yaml(cls, path: Path) -> "LayoutSpec":
@@ -336,6 +370,8 @@ class LayoutSpec:
         if source_raw := report_raw.get("source"):
             source_report_path = (path.parent / source_raw).resolve()
 
+        opts = data.get("options", {}) or {}
+
         return cls(
             report_name=report_raw.get("name", path.stem),
             package=data.get("package"),
@@ -344,4 +380,17 @@ class LayoutSpec:
             shared_rows=shared_rows,
             source_path=path,
             source_report_path=source_report_path,
+            keep_unlisted_visuals=bool(opts.get("keep_unlisted_visuals", False)),
+            keep_unlisted_pages=bool(opts.get("keep_unlisted_pages", False)),
+            prune_interactions=bool(opts.get("prune_interactions", False)),
+            fit_page_height=bool(opts.get("fit_page_height", False)),
+            fit_page_margin=int(opts.get("fit_page_margin", 24)),
+            uniform_page_height=int(opts.get("uniform_page_height", 0) or 0),
+            uniform_scale_protect=set(
+                opts.get("uniform_scale_protect")
+                or {"slicer", "textbox", "actionButton", "image", "cardVisual", "pageNavigator", "shape"}
+            ),
+            normalize_slicer_height=float(opts.get("normalize_slicer_height", 0) or 0),
+            normalize_slicer_max=float(opts.get("normalize_slicer_max", 120) or 120),
+            preserve_config_table=bool(opts.get("preserve_config_table", False)),
         )

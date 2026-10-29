@@ -236,7 +236,10 @@ def _render_col(
     """
     from ..components import resolve_component
 
-    if col.component:
+    if col.overlay_only and not col.component:
+        # coluna-âncora: nenhum visual-base, apenas os overlays (evita placeholder)
+        visuals = []
+    elif col.component:
         component = resolve_component(col.component, col.props, page_id_map, tokens, theme_dir=theme_dir)
         visuals = component.resolve(cell)
         if col.component == "menu" and col.props.get("orientation", "vertical") == "vertical":
@@ -286,6 +289,12 @@ def _render_col(
             visuals.append(_make_info_icon_card(cell, col.name, cell.z + 700, tokens, visuals[0].visual_type, icon=col.info_icon))
 
     for i, ov in enumerate(col.overlay):
+        if ov.info_only:
+            # só o ⓘ da área (ex.: um indicador de um card com vários campos)
+            if ov.name and ov.config and ov.config.info:
+                oc = _overlay_cell(cell, ov, cell.z + 500 + i)
+                visuals.append(_make_info_icon_card(oc, ov.name, cell.z + 700 + i, tokens, "cardVisual", icon=ov.info_icon))
+            continue
         visuals.extend(_render_overlay(ov, cell, source_visuals, tokens, cell.z + 500 + i))
     return visuals
 
@@ -634,7 +643,8 @@ def _build_page(
             if col.border:
                 bc = _border_color(tokens, col.border_color)
                 bw = _border_weight(tokens, col.border_weight)
-                page.add_visual(_make_border_shape(cell, bc, bw, _border_radius(tokens)))
+                br = col.border_radius if col.border_radius is not None else _border_radius(tokens)
+                page.add_visual(_make_border_shape(cell, bc, bw, br))
 
             # Apply per-column height override and vertical alignment.
             col_h = round(col.height, 4) if col.height is not None else cell_h
@@ -661,7 +671,10 @@ def _build_page(
                 for dv in _debug_cell_visual(cell, span_info, z + _Z_STEP - 10):
                     page.add_visual(dv)
 
-            if col.rowspan > 1:
+            # backdrop: a célula ocupa as linhas seguintes só como fundo (ex.: moldura de um
+            # painel com título + cards), sem reservar espaço — os visuais dessas linhas
+            # ficam por cima dela.
+            if col.rowspan > 1 and not col.backdrop:
                 for future in range(row_idx + 1, row_idx + col.rowspan):
                     rowspan_carry.setdefault(future, []).append((x_offset, raw_w))
 
@@ -775,6 +788,16 @@ def build(layout: LayoutSpec, debug: bool = False) -> Report:
             source_visuals, source_pages, tokens,
             debug=debug, theme_dir=pkg_theme_dir,
         )
+        # keep_unlisted_visuals: carrega visuais do source que o layout NAO posicionou,
+        # na posicao original deles (raw_data verbatim). Elimina a necessidade de
+        # ancorar visuais "extras" manualmente para reconciliacao sem perdas.
+        if layout.keep_unlisted_visuals and source_pages:
+            src_page = source_pages.get(page.name)
+            if src_page:
+                placed = {v.name for v in page.visuals}
+                for sv in src_page.visuals:
+                    if sv.name not in placed:
+                        page.add_visual(sv)
         report.add_page(page)
 
     if pkg_theme_dir:
@@ -786,6 +809,61 @@ def build(layout: LayoutSpec, debug: bool = False) -> Report:
         report.config_table_tmdl = build_config_tmdl(info_items)
         for name, _html, height in info_items:
             report.add_page(_make_tooltip_page(name, tokens, height))
+
+    # keep_unlisted_pages: preserva paginas do source ausentes no layout (ex.: tooltips
+    # ocultas), verbatim. Evita ter de restaurar o pages.json manualmente.
+    if layout.keep_unlisted_pages and source_pages:
+        listed = set(page_id_map.values())
+        already = {p.name for p in report.pages}
+        for pname, spage in source_pages.items():
+            if pname not in listed and pname not in already:
+                report.add_page(spage)
+
+    # pos-processamentos opcionais (interacoes penduradas / altura de pagina) --------
+    if layout.prune_interactions or layout.fit_page_height:
+        for page in report.pages:
+            present = {v.name for v in page.visuals}
+            rpd = page.raw_page_data or {}
+            if layout.prune_interactions and rpd.get("visualInteractions"):
+                kept = [
+                    e for e in rpd["visualInteractions"]
+                    if e.get("source") in present and e.get("target") in present
+                ]
+                if kept:
+                    rpd["visualInteractions"] = kept
+                else:
+                    rpd.pop("visualInteractions", None)
+            is_tooltip = rpd.get("type") == "Tooltip" or rpd.get("visibility") == "HiddenInViewMode"
+            # normaliza a altura dos filtros pequenos (dropdown) antes de qualquer escala
+            if layout.normalize_slicer_height and not is_tooltip:
+                for v in page.visuals:
+                    if v.visual_type == "slicer" and v.position.height < layout.normalize_slicer_max:
+                        v.position.height = layout.normalize_slicer_height
+            if layout.uniform_page_height and not is_tooltip:
+                # fixa TODAS as paginas na mesma altura. Se o conteudo passar do limite,
+                # PROTEGE a faixa de filtros do topo (tudo acima do 1o visual de conteudo)
+                # e comprime verticalmente so a regiao de baixo (matrizes/graficos/rodapes),
+                # de modo que os filtros NAO sejam espremidos.
+                target = layout.uniform_page_height
+                usable = max(target - layout.fit_page_margin, 1)
+                chrome = layout.uniform_scale_protect
+                bottom = max((v.position.y + v.position.height for v in page.visuals), default=0)
+                # y_split = topo do 1o visual de conteudo (nao-chrome). Acima disso = faixa de filtros.
+                content_ys = [v.position.y for v in page.visuals if v.visual_type not in chrome]
+                if bottom > usable and content_ys:
+                    y_split = min(content_ys)
+                    region = [v for v in page.visuals if v.position.y >= y_split - 0.5]
+                    r_bot = max((v.position.y + v.position.height for v in region), default=0)
+                    if r_bot > usable and r_bot > y_split:
+                        s = max((usable - y_split) / (r_bot - y_split), 0.05)
+                        for v in region:
+                            v.position.y = round(y_split + (v.position.y - y_split) * s, 4)
+                            v.position.height = round(v.position.height * s, 4)
+                page.height = target
+            elif layout.fit_page_height and not is_tooltip:
+                bottom = max((v.position.y + v.position.height for v in page.visuals), default=0)
+                if bottom > 0:
+                    page.height = int(bottom + layout.fit_page_margin)
 
     return report
 

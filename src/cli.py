@@ -19,7 +19,11 @@ def _cmd_generate(args: argparse.Namespace) -> None:
     report = build(layout, debug=args.debug)
 
     output = Path(args.output) if args.output else layout_path.parent
-    report_dir = render(report, output, source_report_path=layout.source_report_path)
+    report_dir = render(
+        report, output,
+        source_report_path=layout.source_report_path,
+        preserve_config_table=layout.preserve_config_table,
+    )
     print(f"Generated: {report_dir}")
 
 
