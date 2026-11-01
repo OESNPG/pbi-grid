@@ -67,28 +67,39 @@ def _m_escape(s: str) -> str:
 
 
 def _text_lines(text: str, font: int, text_w: float) -> int:
-    """Rough wrapped-line count for *text* at *font* px within *text_w* px."""
+    """Rough wrapped-line count for *text* at *font* px within *text_w* px.
+
+    Conta só o texto visível: marcações HTML (``<b>``, ``<i>``...) não ocupam espaço, e cada
+    ``<br>`` quebra a linha (``<br><br>`` deixa uma linha em branco entre parágrafos).
+    """
     if not text:
         return 1
-    cpl = max(1, int(text_w / (font * 0.52)))  # ~0.52 px-per-char for a proportional font
-    return max(1, math.ceil(len(text) / cpl))
+    import html as _html
+    import re as _re
+    cpl = max(1, int(text_w / (font * 0.48)))  # ~0.48 px-per-char (calibrado no Power BI: ~44 letras por linha em 230 px, fonte 10)
+    lines = 0
+    for part in _re.split(r"<br\s*/?>", text, flags=_re.IGNORECASE):
+        plain = _html.unescape(_re.sub(r"<[^>]+>", "", part)).strip()
+        lines += max(1, math.ceil(len(plain) / cpl))
+    return max(1, lines)
 
 
 def estimate_modal_height(
     description: str, *,
     width: float, body_font: int, padding: int,
-    content_scale: float = 1.25, min_height: float = 90,
+    content_scale: float = 1.1, min_height: float = 90,
 ) -> int:
     """Estimate the modal card height (px) and add a buffer so it never scrolls.
 
     Height is unknown until rendered, so we approximate from text length and the
-    theme font/padding, then scale by ``content_scale`` (e.g. 1.25 = window 25%
+    theme font/padding, then scale by ``content_scale`` (e.g. 1.1 = window 10%
     larger than the content). The HTML Content visual can't be scrolled inside a
     tooltip, so over-sizing slightly is the safe side.
     """
     text_w = max(40.0, width - 2 * padding - 6)
     body_h = _text_lines(description, body_font, text_w) * body_font * 1.45
-    content = 2 * padding + body_h
+    # + margem fixa de segurança: a dica do Power BI não rola, e uma barra de rolagem é pior que sobra
+    content = 2 * padding + body_h + 16
     return int(round(max(min_height, content * content_scale)))
 
 
@@ -125,7 +136,7 @@ def collect_info(layout: LayoutSpec, tokens: dict | None = None) -> list[tuple[s
     style_kw = {k: style[k] for k in ("body_font", "padding") if k in style}
     width = float(style.get("width", 230))
     bf = int(style.get("body_font", 10)); pad = int(style.get("padding", 8))
-    scale = float(style.get("content_scale", 1.25)); minh = float(style.get("min_height", 90))
+    scale = float(style.get("content_scale", 1.1)); minh = float(style.get("min_height", 90))
     out: list[tuple[str, str, int]] = []
     seen: set[str] = set()
     for page in layout.pages:

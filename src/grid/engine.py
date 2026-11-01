@@ -477,6 +477,8 @@ def _make_tooltip_page(name: str, tokens: dict, height: int) -> Page:
                 "border": [{"properties": {"show": literal("false")}}],
                 "background": [{"properties": {"show": literal("false")}}],
                 "dropShadow": [{"properties": {"show": literal("false")}}],
+                # sem o espaçamento interno padrão do contêiner: o texto usa a área toda da página
+                "padding": [{"properties": {k: literal("0D") for k in ("top", "bottom", "left", "right")}}],
             },
             "drillFilterOtherVisuals": True,
         },

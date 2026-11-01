@@ -164,3 +164,14 @@ mensagem de "sem dados" que só aparece quando o gráfico (com fundo transparent
 ```
 
 Usado nos avisos de k-anonimização do painel de egressos (outubro/2026).
+
+## Altura das páginas de info mais justa (`info_table._text_lines` + tema capes)
+
+A altura da página-tooltip do ⓘ é estimada pelo tamanho do texto. Antes, as marcações HTML (`<b>`, `<br>`)
+contavam como texto, as quebras de parágrafo não contavam e o tema `capes` ainda multiplicava por 1,5: as infos
+longas sobravam com ~150 px em branco. Agora a contagem usa só o texto visível, soma as linhas de cada parágrafo
+(cada `<br>` quebra a linha; `<br><br>` deixa uma em branco), com caracteres por linha calibrados no Power BI
+(0,48 × fonte ≈ 44 letras em 230 px) e margem fixa de 16 px; o `content_scale` do tema `capes` caiu para 1,0 e o visual HTML da página
+ficou sem o espaçamento interno do contêiner (padding 0). Uma primeira versão, mais justa, deixou barra de rolagem nas
+infos curtas: a dica do Power BI não rola, então errar para mais é o lado seguro. Nas 46 infos de egressos, a altura
+total caiu ~34% (ex.: mapa da Visão Geral, 546 → 351 px). Novembro/2026.
