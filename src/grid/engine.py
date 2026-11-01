@@ -295,7 +295,9 @@ def _render_col(
                 oc = _overlay_cell(cell, ov, cell.z + 500 + i)
                 visuals.append(_make_info_icon_card(oc, ov.name, cell.z + 700 + i, tokens, "cardVisual", icon=ov.info_icon))
             continue
-        visuals.extend(_render_overlay(ov, cell, source_visuals, tokens, cell.z + 500 + i))
+        # behind: abaixo do visual-base (e acima da moldura, que fica em z - 1)
+        oz = cell.z - 20 + i if ov.behind else cell.z + 500 + i
+        visuals.extend(_render_overlay(ov, cell, source_visuals, tokens, oz))
     return visuals
 
 

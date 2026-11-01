@@ -47,6 +47,9 @@ class OverlaySpec:
     info_only: bool = False
     config: "ColConfig | None" = None
     info_icon: "IconSpec | None" = None
+    # behind: desenha ATRÁS do visual-base (z menor), sem bloquear cliques nele. Ex.: mensagem
+    # de "sem dados" que só aparece quando o gráfico (de fundo transparente) fica vazio.
+    behind: bool = False
 
 
 @dataclass
@@ -196,6 +199,7 @@ def _make_overlayspec(raw: dict[str, Any], base_dir: Path | None = None) -> Over
         info_only=bool(raw.get("info_only", False)),
         config=_resolve_config(raw.get("config"), base_dir),
         info_icon=_make_iconspec(raw.get("info_icon")),
+        behind=bool(raw.get("behind", False)),
     )
 
 

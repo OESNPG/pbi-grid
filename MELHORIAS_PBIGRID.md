@@ -145,3 +145,22 @@ Para desenhar uma moldura que envolve título + cards (várias linhas) sem empur
 
 `backdrop` só muda o `rowspan_carry` (não reserva espaço); a forma da borda fica com z menor que as
 linhas seguintes, então fica atrás. Usado na Visão Geral de `egressos` (outubro/2026).
+
+## Sobreposição atrás do visual: `behind` (overlay)
+
+`behind: true` numa sobreposição desenha o visual **atrás** do visual-base (z da célula − 20, acima
+só da moldura), em vez de por cima. Assim ele não bloqueia cliques nem dicas do gráfico. Uso típico:
+mensagem de "sem dados" que só aparece quando o gráfico (com fundo transparente) fica vazio.
+
+```yaml
+- span: 4
+  name: f1caae20811b9d0a7c43        # gráfico com fundo transparente
+  overlay:
+  - name: a5a0f1caae20811b9d0a      # card com a medida do aviso (em branco quando há dados)
+    behind: true
+    width: 512
+    height: 60
+    offset_y: 16
+```
+
+Usado nos avisos de k-anonimização do painel de egressos (outubro/2026).
