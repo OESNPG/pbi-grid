@@ -447,6 +447,10 @@ def _make_info_icon_card(cell: Cell, name: str, z: int, tokens: dict, vtype: str
                     "show": literal("true"),
                     "section": literal(f"'{page_id}'"),
                 }}],
+                # info_icon.on_top: mantém a camada (o Power BI traz para a frente o visual que
+                # recebe clique/zoom, e o ⓘ sumiria atrás de um mapa)
+                **({"general": [{"properties": {"keepLayerOrder": literal("true")}}]}
+                   if icon is not None and getattr(icon, "on_top", False) else {}),
             },
             "drillFilterOtherVisuals": True,
         },

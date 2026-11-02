@@ -66,6 +66,9 @@ class IconSpec:
     valign: str | None = None     # top  | center | bottom (default top)
     offset_x: float = 0.0
     offset_y: float = 0.0
+    # keepLayerOrder: o ⓘ continua por cima quando o usuário interage com o visual de baixo
+    # (ex.: zoom num Azure Map, que o Power BI traz para a frente ao receber o clique)
+    on_top: bool = False
 
 
 @dataclass
@@ -214,6 +217,7 @@ def _make_iconspec(raw: dict[str, Any] | None) -> "IconSpec | None":
         valign=raw.get("valign"),
         offset_x=float(raw.get("offset_x", 0) or 0),
         offset_y=float(raw.get("offset_y", 0) or 0),
+        on_top=bool(raw.get("on_top", False)),
     )
 
 
