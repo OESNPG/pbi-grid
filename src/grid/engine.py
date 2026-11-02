@@ -239,6 +239,10 @@ def _render_col(
     if col.overlay_only and not col.component:
         # coluna-âncora: nenhum visual-base, apenas os overlays (evita placeholder)
         visuals = []
+    elif col.name == "empty_row" and not col.component:
+        # espaçador: só ocupa lugar na grade. Antes virava uma caixa de texto vazia (uma por aba, com
+        # o nome repetido), que podia ficar por cima de um vizinho e bloquear cliques.
+        visuals = []
     elif col.component:
         component = resolve_component(col.component, col.props, page_id_map, tokens, theme_dir=theme_dir)
         visuals = component.resolve(cell)
@@ -801,6 +805,7 @@ def build(layout: LayoutSpec, debug: bool = False) -> Report:
                 placed = {v.name for v in page.visuals}
                 for sv in src_page.visuals:
                     if sv.name not in placed:
+                        sv.keep_group = True
                         page.add_visual(sv)
         report.add_page(page)
 

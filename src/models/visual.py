@@ -16,6 +16,7 @@ class Visual:
     config: dict = field(default_factory=dict)
     filter_config: dict = field(default_factory=dict)
     raw_data: dict[str, Any] | None = None  # full PBIR JSON when loaded from existing report
+    keep_group: bool = False  # preservado verbatim (keep_unlisted_visuals): mantém o parentGroupName
 
     def to_dict(self) -> dict:
         if self.raw_data is not None:
@@ -25,7 +26,10 @@ class Visual:
             # prevent Power BI from rendering the visual.
             result = dict(self.raw_data)
             result["position"] = self.position.to_dict()
-            result.pop("parentGroupName", None)
+            # Visual preservado sem reposicionar (keep_unlisted_visuals) continua no grupo: a posição
+            # dele é relativa ao grupo, e o grupo também é preservado.
+            if not self.keep_group:
+                result.pop("parentGroupName", None)
             return result
         d: dict = {
             "$schema": _SCHEMA,

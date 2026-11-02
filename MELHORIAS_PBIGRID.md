@@ -175,3 +175,19 @@ longas sobravam com ~150 px em branco. Agora a contagem usa só o texto visível
 ficou sem o espaçamento interno do contêiner (padding 0). Uma primeira versão, mais justa, deixou barra de rolagem nas
 infos curtas: a dica do Power BI não rola, então errar para mais é o lado seguro. Nas 46 infos de egressos, a altura
 total caiu ~34% (ex.: mapa da Visão Geral, 546 → 351 px). Novembro/2026.
+
+## Preservar o que veio do Desktop: grupos e ajuste de exibição da página
+
+- **Grupos (`keep_unlisted_visuals`):** o visual que o layout não lista é copiado como está, mas o `to_dict`
+  tirava o `parentGroupName` de todos os visuais. Um filho de grupo tem a posição **relativa ao grupo**; sem o
+  vínculo, ele ia parar no canto da página. Agora o visual preservado (`Visual.keep_group`) continua no grupo; só
+  o visual reposicionado pela grade sai dele, como antes.
+- **`displayOption` da página:** o generate gravava sempre `FitToPage`, e era preciso devolver o `page.json`
+  original à mão (as abas dos painéis são `FitToWidth`). Agora a página que já existe mantém o ajuste salvo no
+  Desktop; só a página nova usa o padrão.
+
+Testes em `tests/unit/test_preserva_desktop.py`. Encontrado ao sincronizar o painel de temas estratégicos
+(grupo com o mapa da aba Temas Estratégicos). Novembro/2026.
+- **Espaçador `empty_row`:** a coluna/linha de espaço (`name: empty_row`) virava uma caixa de texto vazia com esse
+  nome, uma por aba (as repetidas se sobrescreviam). Em temas ela ficou por cima de 4 a 8 px do rodapé, que tem link.
+  Agora o espaçador só ocupa lugar na grade, sem visual. As caixas que já existiam em egressos e temas foram retiradas.

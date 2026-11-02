@@ -29,7 +29,8 @@ class Page:
             result = dict(self.raw_page_data)
             result["name"] = self.name
             result["displayName"] = self.display_name
-            result["displayOption"] = self.display_option
+            # mantém o ajuste de exibição salvo no Desktop (ex.: FitToWidth); só página nova usa o padrão
+            result["displayOption"] = self.raw_page_data.get("displayOption", self.display_option)
             result["height"] = self.height
             result["width"] = self.width
             return result
