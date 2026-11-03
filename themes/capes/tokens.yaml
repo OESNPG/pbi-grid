@@ -541,6 +541,8 @@ palette:
         - wordWrap: true
         visualHeader:
         - showFilterRestatementButton: false
+          showPinButton: false        # sem "Fixar visual" (alfinete)
+          showSetAlertButton: false   # sem "Definir alerta" (sininho)
         line:
         - transparency: 0
         outline:
